@@ -30,14 +30,16 @@
 - production-v1 生产实验范围 HDFS 落盘（批次 `prod_v1_100k`）；
 - production-v1 分区 ODS；
 - production-v1 分区 Parquet DWD；
-- production-v1 正式 NLP 输入导出与交付验证。
+- production-v1 正式 NLP 输入导出与交付验证；
+- 真实预测回写与 production DWS 管道代码准备（尚未执行导入）。
 
 ### 尚未完成
 
 - 实际 NLP 模型训练；
-- 实际模型预测导入；
+- 真实模型预测文件交付；
+- production 预测导入；
 - 真实方面提取；
-- 生产 DWS；
-- FastAPI；
+- production DWS 执行；
+- Agent FastAPI 集成；
 - Dashboard；
 - Agent 最终集成。
