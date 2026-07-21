@@ -1,0 +1,600 @@
+{
+  "completion_status": "successful",
+  "generated_at_utc": "2026-07-21T07:29:29.708085+00:00",
+  "inspection_version": "2.0.0-bounded",
+  "limitations": [
+    "Only bounded leading subsets were inspected.",
+    "Exact full counts will be calculated later with Hive.",
+    "No NLP model was executed.",
+    "No HDFS or Hive work was executed."
+  ],
+  "limits": {
+    "metadata_physical_lines": 50000,
+    "review_physical_lines": 100000
+  },
+  "metadata_profile": {
+    "blank_lines": 0,
+    "distinct_parent_asin_within_sample": 50000,
+    "field_blank_string": {
+      "average_rating": 0,
+      "bought_together": 0,
+      "categories": 0,
+      "description": 0,
+      "details": 0,
+      "features": 0,
+      "images": 0,
+      "main_category": 0,
+      "parent_asin": 0,
+      "price": 0,
+      "rating_number": 0,
+      "store": 0,
+      "title": 0,
+      "videos": 0
+    },
+    "field_null": {
+      "average_rating": 0,
+      "bought_together": 50000,
+      "categories": 0,
+      "description": 0,
+      "details": 0,
+      "features": 0,
+      "images": 0,
+      "main_category": 0,
+      "parent_asin": 0,
+      "price": 45125,
+      "rating_number": 0,
+      "store": 1604,
+      "title": 0,
+      "videos": 0
+    },
+    "field_occurrence": {
+      "average_rating": 50000,
+      "bought_together": 50000,
+      "categories": 50000,
+      "description": 50000,
+      "details": 50000,
+      "features": 50000,
+      "images": 50000,
+      "main_category": 50000,
+      "parent_asin": 50000,
+      "price": 50000,
+      "rating_number": 50000,
+      "store": 50000,
+      "title": 50000,
+      "videos": 50000
+    },
+    "field_types": {
+      "average_rating": {
+        "number": 50000
+      },
+      "bought_together": {
+        "null": 50000
+      },
+      "categories": {
+        "array": 50000
+      },
+      "description": {
+        "array": 50000
+      },
+      "details": {
+        "object": 50000
+      },
+      "features": {
+        "array": 50000
+      },
+      "images": {
+        "array": 50000
+      },
+      "main_category": {
+        "string": 50000
+      },
+      "parent_asin": {
+        "string": 50000
+      },
+      "price": {
+        "null": 45125,
+        "number": 4875
+      },
+      "rating_number": {
+        "integer": 50000
+      },
+      "store": {
+        "null": 1604,
+        "string": 48396
+      },
+      "title": {
+        "string": 50000
+      },
+      "videos": {
+        "array": 50000
+      }
+    },
+    "malformed_examples": [],
+    "malformed_json_count": 0,
+    "non_object_json_count": 0,
+    "observed_fields": [
+      "average_rating",
+      "bought_together",
+      "categories",
+      "description",
+      "details",
+      "features",
+      "images",
+      "main_category",
+      "parent_asin",
+      "price",
+      "rating_number",
+      "store",
+      "title",
+      "videos"
+    ],
+    "physical_lines_inspected": 50000,
+    "scope_label": "Sample inspection only — not a complete dataset statistic.",
+    "valid_object_count": 50000
+  },
+  "mode": "bounded",
+  "review_profile": {
+    "blank_lines": 0,
+    "blank_review_text_count": 24,
+    "field_blank_string": {
+      "asin": 0,
+      "helpful_vote": 0,
+      "images": 0,
+      "parent_asin": 0,
+      "rating": 0,
+      "text": 24,
+      "timestamp": 0,
+      "title": 0,
+      "user_id": 0,
+      "verified_purchase": 0
+    },
+    "field_null": {
+      "asin": 0,
+      "helpful_vote": 0,
+      "images": 0,
+      "parent_asin": 0,
+      "rating": 0,
+      "text": 0,
+      "timestamp": 0,
+      "title": 0,
+      "user_id": 0,
+      "verified_purchase": 0
+    },
+    "field_occurrence": {
+      "asin": 100000,
+      "helpful_vote": 100000,
+      "images": 100000,
+      "parent_asin": 100000,
+      "rating": 100000,
+      "text": 100000,
+      "timestamp": 100000,
+      "title": 100000,
+      "user_id": 100000,
+      "verified_purchase": 100000
+    },
+    "field_types": {
+      "asin": {
+        "string": 100000
+      },
+      "helpful_vote": {
+        "integer": 100000
+      },
+      "images": {
+        "array": 100000
+      },
+      "parent_asin": {
+        "string": 100000
+      },
+      "rating": {
+        "number": 100000
+      },
+      "text": {
+        "string": 100000
+      },
+      "timestamp": {
+        "integer": 100000
+      },
+      "title": {
+        "string": 100000
+      },
+      "user_id": {
+        "string": 100000
+      },
+      "verified_purchase": {
+        "boolean": 100000
+      }
+    },
+    "helpful_vote_invalid_or_missing_count": 0,
+    "helpful_vote_maximum": 454.0,
+    "helpful_vote_mean": 0.66438,
+    "helpful_vote_minimum": 0.0,
+    "helpful_vote_valid_count": 100000,
+    "helpful_vote_zero_count": 77785,
+    "invalid_rating_count": 0,
+    "malformed_examples": [],
+    "malformed_json_count": 0,
+    "matched_parent_asin_rows": 11516,
+    "missing_or_blank_parent_asin_rows": 0,
+    "missing_review_text_count": 0,
+    "non_object_json_count": 0,
+    "null_review_text_count": 0,
+    "observed_fields": [
+      "asin",
+      "helpful_vote",
+      "images",
+      "parent_asin",
+      "rating",
+      "text",
+      "timestamp",
+      "title",
+      "user_id",
+      "verified_purchase"
+    ],
+    "physical_lines_inspected": 100000,
+    "rating_distribution": {
+      "1": 9010,
+      "2": 6673,
+      "3": 10947,
+      "4": 16424,
+      "5": 56946
+    },
+    "rating_outside_1_to_5_count": 0,
+    "reviews_with_parent_asin": 100000,
+    "sample_parent_asin_join_rate": 0.11516,
+    "scope_label": "Sample inspection only — not a complete dataset statistic.",
+    "timestamp_invalid_or_missing_count": 0,
+    "timestamp_maximum_raw": 1679286824379.0,
+    "timestamp_maximum_utc": "2023-03-20T04:33:44.379000+00:00",
+    "timestamp_minimum_raw": 1056064050000.0,
+    "timestamp_minimum_utc": "2003-06-19T23:07:30+00:00",
+    "timestamp_valid_count": 100000,
+    "unmatched_parent_asin_rows": 88484,
+    "valid_object_count": 100000,
+    "verified_purchase_distribution": {
+      "boolean:false": 12814,
+      "boolean:true": 87186
+    },
+    "weak_sentiment_distribution": {
+      "negative": 15683,
+      "neutral": 10947,
+      "positive": 73370
+    }
+  },
+  "sampling": {
+    "algorithm": "reservoir sampling",
+    "metadata_sample_filename": "meta_sample_100.jsonl",
+    "metadata_sample_sha256": "56a4c00181fbeec19f06686f3a05840c504c01fc4e0f87e29ac0a1ece256f83c",
+    "metadata_sample_size": 100,
+    "review_sample_filename": "reviews_sample_100.jsonl",
+    "review_sample_sha256": "fc1b5e8d4d381a7e711c12bf015faa6adffb74469f0612a7b5f7c7dc1b521821",
+    "review_sample_size": 100,
+    "seed": 42
+  },
+  "schema_profile": [
+    {
+      "dataset": "review",
+      "field": "asin",
+      "hive_type": "STRING",
+      "meaning": "Amazon item identifier",
+      "nullable": false,
+      "presence": 100000,
+      "status": "Observed in bounded sample",
+      "target": "asin",
+      "types": {
+        "string": 100000
+      }
+    },
+    {
+      "dataset": "review",
+      "field": "helpful_vote",
+      "hive_type": "BIGINT",
+      "meaning": "Helpful-vote count",
+      "nullable": false,
+      "presence": 100000,
+      "status": "Observed in bounded sample",
+      "target": "helpful_vote",
+      "types": {
+        "integer": 100000
+      }
+    },
+    {
+      "dataset": "review",
+      "field": "images",
+      "hive_type": "ARRAY<STRING>",
+      "meaning": "Image information",
+      "nullable": false,
+      "presence": 100000,
+      "status": "Observed in bounded sample",
+      "target": "images",
+      "types": {
+        "array": 100000
+      }
+    },
+    {
+      "dataset": "review",
+      "field": "parent_asin",
+      "hive_type": "STRING",
+      "meaning": "Parent product identifier and join key",
+      "nullable": false,
+      "presence": 100000,
+      "status": "Observed in bounded sample",
+      "target": "parent_asin",
+      "types": {
+        "string": 100000
+      }
+    },
+    {
+      "dataset": "review",
+      "field": "rating",
+      "hive_type": "DOUBLE",
+      "meaning": "Review star rating",
+      "nullable": false,
+      "presence": 100000,
+      "status": "Observed in bounded sample",
+      "target": "rating",
+      "types": {
+        "number": 100000
+      }
+    },
+    {
+      "dataset": "review",
+      "field": "text",
+      "hive_type": "STRING",
+      "meaning": "Review body text",
+      "nullable": false,
+      "presence": 100000,
+      "status": "Observed in bounded sample",
+      "target": "text",
+      "types": {
+        "string": 100000
+      }
+    },
+    {
+      "dataset": "review",
+      "field": "timestamp",
+      "hive_type": "BIGINT",
+      "meaning": "Review event timestamp",
+      "nullable": false,
+      "presence": 100000,
+      "status": "Observed in bounded sample",
+      "target": "timestamp",
+      "types": {
+        "integer": 100000
+      }
+    },
+    {
+      "dataset": "review",
+      "field": "title",
+      "hive_type": "STRING",
+      "meaning": "Review or product title",
+      "nullable": false,
+      "presence": 100000,
+      "status": "Observed in bounded sample",
+      "target": "title",
+      "types": {
+        "string": 100000
+      }
+    },
+    {
+      "dataset": "review",
+      "field": "user_id",
+      "hive_type": "STRING",
+      "meaning": "Reviewer identifier",
+      "nullable": false,
+      "presence": 100000,
+      "status": "Observed in bounded sample",
+      "target": "user_id",
+      "types": {
+        "string": 100000
+      }
+    },
+    {
+      "dataset": "review",
+      "field": "verified_purchase",
+      "hive_type": "BOOLEAN",
+      "meaning": "Verified-purchase indicator",
+      "nullable": false,
+      "presence": 100000,
+      "status": "Observed in bounded sample",
+      "target": "verified_purchase",
+      "types": {
+        "boolean": 100000
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "average_rating",
+      "hive_type": "DOUBLE",
+      "meaning": "Product average rating",
+      "nullable": false,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "average_rating",
+      "types": {
+        "number": 50000
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "bought_together",
+      "hive_type": "STRING",
+      "meaning": "Frequently bought-together information",
+      "nullable": true,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "bought_together",
+      "types": {
+        "null": 50000
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "categories",
+      "hive_type": "ARRAY<STRING>",
+      "meaning": "Product category hierarchy",
+      "nullable": false,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "categories",
+      "types": {
+        "array": 50000
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "description",
+      "hive_type": "ARRAY<STRING>",
+      "meaning": "Product description",
+      "nullable": false,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "description",
+      "types": {
+        "array": 50000
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "details",
+      "hive_type": "STRING",
+      "meaning": "Product detail attributes",
+      "nullable": false,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "details",
+      "types": {
+        "object": 50000
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "features",
+      "hive_type": "ARRAY<STRING>",
+      "meaning": "Product feature list",
+      "nullable": false,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "features",
+      "types": {
+        "array": 50000
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "images",
+      "hive_type": "ARRAY<STRING>",
+      "meaning": "Image information",
+      "nullable": false,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "images",
+      "types": {
+        "array": 50000
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "main_category",
+      "hive_type": "STRING",
+      "meaning": "Primary product category",
+      "nullable": false,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "main_category",
+      "types": {
+        "string": 50000
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "parent_asin",
+      "hive_type": "STRING",
+      "meaning": "Parent product identifier and join key",
+      "nullable": false,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "parent_asin",
+      "types": {
+        "string": 50000
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "price",
+      "hive_type": "DOUBLE",
+      "meaning": "Product price",
+      "nullable": true,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "price",
+      "types": {
+        "null": 45125,
+        "number": 4875
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "rating_number",
+      "hive_type": "BIGINT",
+      "meaning": "Product rating count",
+      "nullable": false,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "rating_number",
+      "types": {
+        "integer": 50000
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "store",
+      "hive_type": "STRING",
+      "meaning": "Store or brand name",
+      "nullable": true,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "store",
+      "types": {
+        "null": 1604,
+        "string": 48396
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "title",
+      "hive_type": "STRING",
+      "meaning": "Review or product title",
+      "nullable": false,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "title",
+      "types": {
+        "string": 50000
+      }
+    },
+    {
+      "dataset": "metadata",
+      "field": "videos",
+      "hive_type": "ARRAY<STRING>",
+      "meaning": "Video information",
+      "nullable": false,
+      "presence": 50000,
+      "status": "Observed in bounded sample",
+      "target": "videos",
+      "types": {
+        "array": 50000
+      }
+    }
+  ],
+  "scope_label": "Sample inspection only — not a complete dataset statistic.",
+  "sources": {
+    "metadata": {
+      "byte_size": 1422365805,
+      "filename": "meta_Amazon_Fashion.jsonl"
+    },
+    "review": {
+      "byte_size": 1051324731,
+      "filename": "Amazon_Fashion.jsonl"
+    }
+  }
+}
