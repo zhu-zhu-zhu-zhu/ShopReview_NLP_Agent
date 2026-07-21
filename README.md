@@ -26,11 +26,13 @@
 - Phase C 100 行 HDFS/Hive ODS smoke test；
 - Phase D 协调匹配样本 JOIN 与 DWD smoke test；
 - Phase E NLP 数据交接与预测写回契约 smoke test（合成接口记录，不是模型输出）；
-- Phase F DWS 聚合与 Agent 安全 JSON 导出 smoke test（方面记录为合成契约数据）。
+- Phase F DWS 聚合与 Agent 安全 JSON 导出 smoke test（方面记录为合成契约数据）；
+- production-v1 生产实验范围 HDFS 落盘（批次 `prod_v1_100k`）；
+- production-v1 分区 ODS；
+- production-v1 分区 Parquet DWD。
 
 ### 尚未完成
 
-- 完整数据生产 ODS/DWD；
 - 实际 NLP 模型训练；
 - 实际模型预测导入；
 - 真实方面提取；
