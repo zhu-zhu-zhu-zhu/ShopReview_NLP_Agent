@@ -19,4 +19,19 @@
 
 ## 状态
 
-当前仅落地**实施框架说明书**；代码与数据目录按说明书阶段 A 再建。
+### 已完成
+
+- 实施框架与 Amazon Fashion 决策对齐；
+- Phase B 有界数据检查；
+- Phase C 100 行 HDFS/Hive ODS smoke test。
+
+### 尚未完成
+
+- 完整数据 HDFS 加载；
+- 生产 ODS；
+- DWD；
+- NLP 模型集成；
+- DWS；
+- API；
+- Dashboard；
+- Agent 集成。
