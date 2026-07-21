@@ -1,0 +1,11 @@
+USE review_dw;
+SELECT COUNT(*) AS dwd_count FROM dwd_amazon_fashion_review_smoke;
+SELECT COUNT(*) AS prediction_contract_count FROM dwd_review_sentiment_contract_smoke;
+SELECT COUNT(*) AS joined_view_count FROM vw_dwd_review_with_sentiment_smoke;
+SELECT COUNT(*) AS missing_prediction_count FROM vw_dwd_review_with_sentiment_smoke WHERE pred_label IS NULL;
+SELECT COUNT(*) AS unknown_prediction_key_count FROM dwd_review_sentiment_contract_smoke p LEFT JOIN dwd_amazon_fashion_review_smoke d ON p.review_key=d.review_key WHERE d.review_key IS NULL;
+SELECT COUNT(*) AS duplicate_prediction_key_groups FROM (SELECT review_key, model_version FROM dwd_review_sentiment_contract_smoke GROUP BY review_key,model_version HAVING COUNT(*)>1) x;
+SELECT COUNT(*) AS invalid_pred_label_count FROM dwd_review_sentiment_contract_smoke WHERE pred_label NOT IN ('negative','neutral','positive');
+SELECT COUNT(*) AS invalid_pred_score_count FROM dwd_review_sentiment_contract_smoke WHERE pred_score<0 OR pred_score>1 OR pred_score IS NULL;
+SELECT COUNT(*) AS missing_model_version_count FROM dwd_review_sentiment_contract_smoke WHERE model_version IS NULL OR trim(model_version)='';
+SELECT model_version, prediction_source, COUNT(*) AS row_count FROM dwd_review_sentiment_contract_smoke GROUP BY model_version,prediction_source;

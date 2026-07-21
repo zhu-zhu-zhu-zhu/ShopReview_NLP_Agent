@@ -23,14 +23,17 @@
 
 - 实施框架与 Amazon Fashion 决策对齐；
 - Phase B 有界数据检查；
-- Phase C 100 行 HDFS/Hive ODS smoke test。
+- Phase C 100 行 HDFS/Hive ODS smoke test；
+- Phase D 协调匹配样本 JOIN 与 DWD smoke test；
+- Phase E NLP 数据交接与预测写回契约 smoke test（合成接口记录，不是模型输出）。
 
 ### 尚未完成
 
 - 完整数据 HDFS 加载；
-- 生产 ODS；
-- DWD；
-- NLP 模型集成；
+- 完整数据生产 ODS；
+- 完整数据生产 DWD；
+- 实际 NLP 模型训练；
+- 实际模型预测导入；
 - DWS；
 - API；
 - Dashboard；
