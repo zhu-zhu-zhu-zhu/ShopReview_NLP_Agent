@@ -29,7 +29,8 @@
 - Phase F DWS 聚合与 Agent 安全 JSON 导出 smoke test（方面记录为合成契约数据）；
 - production-v1 生产实验范围 HDFS 落盘（批次 `prod_v1_100k`）；
 - production-v1 分区 ODS；
-- production-v1 分区 Parquet DWD。
+- production-v1 分区 Parquet DWD；
+- production-v1 正式 NLP 输入导出与交付验证。
 
 ### 尚未完成
 

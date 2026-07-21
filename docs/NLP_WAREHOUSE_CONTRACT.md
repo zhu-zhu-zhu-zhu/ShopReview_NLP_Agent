@@ -69,3 +69,15 @@ NLP developer responsibilities:
 - not change Hive schemas independently.
 
 The Phase E smoke records use `model_version='contract_smoke_not_a_model'` and `prediction_source='synthetic_contract_test'`. They are synthetic interface-test records, not model predictions.
+
+## Production-v1 Handoff
+
+- Batch ID: `prod_v1_100k`
+- Source table: `review_dw.dwd_amazon_fashion_review`
+- Exported input filename: `nlp_input_prod_v1.jsonl`
+- Input fields, in fixed order: `review_key`, `review_text_clean`, `rating_label`, `rating`, `parent_asin`, `main_category`, `review_time`, `load_batch_id`
+- Expected prediction output fields: `review_key`, `pred_label`, `pred_score`, `model_version`, `inferred_at`
+
+The NLP developer must preserve `review_key` exactly and must not regenerate, normalize, or otherwise modify it. Every returned prediction must include a non-empty `model_version`; warehouse write-back uniqueness is one row per (`review_key`, `model_version`). A new trained artifact or inference run must use an appropriately versioned `model_version` so results remain distinguishable and auditable.
+
+`rating_label` remains a rating-derived weak supervision label and is not a model prediction. No real production-v1 model predictions have been imported yet.

@@ -1,0 +1,23 @@
+{
+  "batch_id": "prod_v1_100k",
+  "source_table": "review_dw.dwd_amazon_fashion_review",
+  "export_row_count": 99703,
+  "unique_review_key_count": 99703,
+  "duplicate_review_key_count": 0,
+  "null_review_key_count": 0,
+  "blank_review_text_count": 0,
+  "invalid_rating_label_count": 0,
+  "negative_count": 15640,
+  "neutral_count": 10913,
+  "positive_count": 73150,
+  "minimum_rating": 1.0,
+  "maximum_rating": 5.0,
+  "rows_with_parent_asin": 99703,
+  "rows_with_main_category": 99703,
+  "rows_with_review_time": 99703,
+  "export_timestamp": "2026-07-21T14:37:25.894431Z",
+  "schema_version": "production_v1.0",
+  "output_filename": "nlp_input_prod_v1.jsonl",
+  "output_file_size_bytes": 46005546,
+  "output_file_sha256": "e10925187eea5fc34721778c0a6e2ea5b8c7492a1325fd0c49966dafe3f12714"
+}
