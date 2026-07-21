@@ -1,0 +1,22 @@
+{
+  "schema_version": "draft_v0.1",
+  "dataset": "sentiment_overview",
+  "source_table": "review_dw.dws_sentiment_overview_smoke",
+  "data_scope": "phase_d_e_smoke_contract",
+  "records": [
+    {
+      "review_count": 50,
+      "user_count": 28,
+      "product_count": 50,
+      "positive_count": 44,
+      "neutral_count": 6,
+      "negative_count": 0,
+      "positive_rate": 0.88,
+      "neutral_rate": 0.12,
+      "negative_rate": 0.0,
+      "average_rating": 4.46,
+      "generated_at": "2026-07-21 20:45:34.463",
+      "data_scope": "phase_d_e_smoke_contract"
+    }
+  ]
+}
