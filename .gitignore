@@ -1,0 +1,33 @@
+# 数据与模型（太大，不要上传）
+data/raw/
+data/sample/
+data/processed/
+models/**/*.bin
+models/**/*.pt
+models/**/*.ckpt
+models/**/*.pth
+*.csv
+*.parquet
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# 前端
+node_modules/
+dist/
+
+# 密钥与本地配置
+.env
+.env.local
+.env.*.local
+
+# IDE / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
