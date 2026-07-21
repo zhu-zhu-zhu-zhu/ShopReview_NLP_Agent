@@ -23,4 +23,27 @@
 
 ## 状态
 
-当前仅落地**实施框架说明书**；代码与数据目录按说明书阶段 A 再建。
+### 已完成
+
+- 实施框架与 Amazon Fashion 决策对齐；
+- Phase B 有界数据检查；
+- Phase C 100 行 HDFS/Hive ODS smoke test；
+- Phase D 协调匹配样本 JOIN 与 DWD smoke test；
+- Phase E NLP 数据交接与预测写回契约 smoke test（合成接口记录，不是模型输出）；
+- Phase F DWS 聚合与 Agent 安全 JSON 导出 smoke test（方面记录为合成契约数据）；
+- production-v1 生产实验范围 HDFS 落盘（批次 `prod_v1_100k`）；
+- production-v1 分区 ODS；
+- production-v1 分区 Parquet DWD；
+- production-v1 正式 NLP 输入导出与交付验证；
+- 真实预测回写与 production DWS 管道代码准备（尚未执行导入）。
+
+### 尚未完成
+
+- 实际 NLP 模型训练；
+- 真实模型预测文件交付；
+- production 预测导入；
+- 真实方面提取；
+- production DWS 执行；
+- Agent FastAPI 集成；
+- Dashboard；
+- Agent 最终集成。

@@ -1,0 +1,45 @@
+{
+  "schema_version": "production_v1.0",
+  "field_order": [
+    "review_key",
+    "review_text_clean",
+    "rating_label",
+    "rating",
+    "parent_asin",
+    "main_category",
+    "review_time",
+    "load_batch_id"
+  ],
+  "field_meanings": {
+    "review_key": "Warehouse-generated stable identifier; preserve exactly.",
+    "review_text_clean": "Cleaned non-empty review text for NLP input.",
+    "rating_label": "Rating-derived weak label; not a model prediction.",
+    "rating": "Original star rating.",
+    "parent_asin": "Product-family identifier.",
+    "main_category": "Product category when metadata matched.",
+    "review_time": "Parsed review timestamp.",
+    "load_batch_id": "Warehouse production batch identifier."
+  },
+  "expected_types": {
+    "review_key": "string",
+    "review_text_clean": "string",
+    "rating_label": "string enum: negative|neutral|positive",
+    "rating": "number",
+    "parent_asin": "string|null",
+    "main_category": "string|null",
+    "review_time": "string|null (Hive timestamp)",
+    "load_batch_id": "string"
+  },
+  "batch_id": "prod_v1_100k",
+  "source_table": "review_dw.dwd_amazon_fashion_review",
+  "label_mapping": {
+    "rating_1_to_2": "negative",
+    "rating_3": "neutral",
+    "rating_4_to_5": "positive"
+  },
+  "rating_label_is_weak_label": true,
+  "rating_label_statement": "rating_label is derived from star rating and is not an NLP model prediction.",
+  "output_filename": "nlp_input_prod_v1.jsonl",
+  "output_file_sha256": "e10925187eea5fc34721778c0a6e2ea5b8c7492a1325fd0c49966dafe3f12714",
+  "generated_timestamp": "2026-07-21T14:37:25.894431Z"
+}
