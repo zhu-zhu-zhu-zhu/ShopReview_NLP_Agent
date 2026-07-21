@@ -1,7 +1,10 @@
 # 数据与模型（太大，不要上传）
 data/raw/
 data/sample/
+data/state/
 data/processed/
+*.jsonl
+*.jsonl.gz
 models/**/*.bin
 models/**/*.pt
 models/**/*.ckpt
@@ -12,6 +15,7 @@ models/**/*.pth
 # Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
 .venv/
 venv/
 *.egg-info/
@@ -22,8 +26,22 @@ dist/
 
 # 密钥与本地配置
 .env
+.env.*
+!.env.example
 .env.local
 .env.*.local
+
+# 本地检查缓存
+*.sqlite
+*.sqlite3
+*.db
+*.wal
+*.shm
+
+# 本地 smoke / 已停止的完整检查输出
+reports/data_inspection/smoke_*
+reports/data_inspection/amazon_fashion_profile.json
+reports/data_inspection/sample_manifest.json
 
 # IDE / 系统
 .idea/
