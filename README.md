@@ -31,15 +31,17 @@
 - production-v1 分区 ODS；
 - production-v1 分区 Parquet DWD；
 - production-v1 正式 NLP 输入导出与交付验证；
-- 真实预测回写与 production DWS 管道代码准备（尚未执行导入）。
+- `tfidf_logreg_oof_v1` 真实 OOF 预测导入与 production Hive DWS；
+- Hive DWS → MySQL 服务层同步实现与合成单元测试；
+- production Hive DWS 的 MySQL ExportOnly 本地导出与校验。
 
 ### 尚未完成
 
-- 实际 NLP 模型训练；
-- 真实模型预测文件交付；
-- production 预测导入；
+- 本机 MySQL Server 配置与 writer 凭据；
+- 实际 MySQL 服务层数据同步；
+- Hive/MySQL 对账；
+- Agent 专用只读 `agent_reader` 账户；
 - 真实方面提取；
-- production DWS 执行；
 - Agent FastAPI 集成；
 - Dashboard；
 - Agent 最终集成。

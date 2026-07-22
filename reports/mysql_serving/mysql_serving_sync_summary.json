@@ -1,0 +1,50 @@
+{
+  "batch_id": "prod_v1_100k",
+  "credential_safety_status": "PASS",
+  "duplicate_key_counts": {
+    "mysql": null,
+    "source": {
+      "dws_product_sentiment": 0,
+      "dws_sentiment_daily": 0,
+      "dws_sentiment_overview": 0
+    }
+  },
+  "hive_export_status": "PASS",
+  "hive_source_counts": {
+    "daily": 4137,
+    "overview": 1,
+    "product": 76784
+  },
+  "local_export_counts": {
+    "daily": 4137,
+    "overview": 1,
+    "product": 76784
+  },
+  "local_export_validation_status": "PASS",
+  "model_version": "tfidf_logreg_oof_v1",
+  "mysql_sync_status": "PENDING",
+  "mysql_target_counts": null,
+  "overview_business_totals": {
+    "daily_review_count_sum": 99703,
+    "negative_count": 15899,
+    "neutral_count": 18943,
+    "overview_review_count": 99703,
+    "positive_count": 64861,
+    "product_count": 76784,
+    "product_review_count_sum": 99703,
+    "sentiment_count_sum": 99703
+  },
+  "rate_validation": {
+    "mysql_invalid_rows": null,
+    "source_invalid_rows": 0
+  },
+  "reason": "MySQL port 3306 unavailable and credentials not configured",
+  "reconciliation_status": "PENDING",
+  "result": "PENDING",
+  "synchronized_at_utc": "2026-07-22T13:30:09Z",
+  "table_names": [
+    "shopreview_serving.dws_sentiment_overview",
+    "shopreview_serving.dws_sentiment_daily",
+    "shopreview_serving.dws_product_sentiment"
+  ]
+}
