@@ -1,0 +1,23 @@
+{
+  "coverage": 1.0,
+  "duplicate_key_count": 0,
+  "inferred_at": "2026-07-22T10:52:50Z",
+  "label_distribution": {
+    "negative": 15899,
+    "neutral": 18943,
+    "positive": 64861
+  },
+  "missing_key_count": 0,
+  "model_version": "tfidf_logreg_oof_v1",
+  "pred_score": {
+    "max": 0.9999823570251465,
+    "mean": 0.7533969470694502,
+    "min": 0.3361221253871918
+  },
+  "prediction_file_sha256": "6f864870573275f38a610b3d9c6b0bed3250e208061d81d2fc45edfc20f40f95",
+  "prediction_file_size_bytes": 32095502,
+  "prediction_row_count": 99703,
+  "result": "PASS",
+  "unique_key_count": 99703,
+  "unknown_key_count": 0
+}

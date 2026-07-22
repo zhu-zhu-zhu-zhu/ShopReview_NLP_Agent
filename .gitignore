@@ -6,8 +6,18 @@ models/**/*.bin
 models/**/*.pt
 models/**/*.ckpt
 models/**/*.pth
+models/
+*.joblib
+*.pkl
 *.csv
 *.parquet
+data/state/
+reports/nlp/runtime/
+*.sqlite
+*.sqlite3
+
+# NLP 的安全聚合报告允许跟踪（不含评论原文）
+!reports/nlp/*.csv
 
 # Python
 __pycache__/

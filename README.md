@@ -17,6 +17,19 @@
 | 名称 | 基于公开数据集的电商用户评论情感分析 |
 | 技术栈 | HDFS, Hive, Python, NLP, 情感分类 + LLM Agent |
 
-## 状态
+## NLP 状态
 
-当前仅落地**实施框架说明书**；代码与数据目录按说明书阶段 A 再建。
+已完成：
+
+- production-v1 NLP 输入校验；
+- TF-IDF + Logistic Regression 基线模型；
+- 独立留出测试集评估；
+- 5 折 OOF 全量生产预测生成；
+- 预测数据契约校验。
+
+待完成：
+
+- 数仓预测导入；
+- production DWS 执行；
+- Agent 集成；
+- 可选的 Transformer 模型对比。

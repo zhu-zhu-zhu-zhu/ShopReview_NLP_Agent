@@ -1,0 +1,37 @@
+{
+  "algorithm": "TfidfVectorizer + LogisticRegression",
+  "class_weight": "balanced",
+  "feature_configuration": {
+    "dtype": "float32",
+    "lowercase": true,
+    "max_df": 0.98,
+    "max_features": 50000,
+    "min_df": 2,
+    "ngram_range": [
+      1,
+      2
+    ],
+    "source_field": "review_text_clean",
+    "stop_words": null,
+    "strip_accents": "unicode",
+    "sublinear_tf": true
+  },
+  "generated_utc": "2026-07-22T11:09:52Z",
+  "input_sha256": "e10925187eea5fc34721778c0a6e2ea5b8c7492a1325fd0c49966dafe3f12714",
+  "label_distribution": {
+    "negative": 15640,
+    "neutral": 10913,
+    "positive": 73150
+  },
+  "model_file_sha256": "f3be40026a352dd279691ed7f1dc99665f997be6b367a3f7614e2d32555496db",
+  "model_version": "tfidf_logreg_v1",
+  "numpy_version": "2.5.1",
+  "purpose": "future unseen-review inference only",
+  "python_version": "3.13.1",
+  "random_state": 42,
+  "result": "PASS",
+  "scikit_learn_version": "1.9.0",
+  "selected_C": 0.5,
+  "training_row_count": 99703,
+  "used_for_official_oof_predictions": false
+}

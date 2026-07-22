@@ -1,0 +1,244 @@
+{
+  "candidate_validation_results": [
+    {
+      "C": 0.5,
+      "accuracy": 0.7800401203610833,
+      "macro_f1": 0.6585518857451175,
+      "weighted_f1": 0.8028426607817944
+    },
+    {
+      "C": 1.0,
+      "accuracy": 0.7617853560682046,
+      "macro_f1": 0.6546809079883574,
+      "weighted_f1": 0.7941395054058392
+    },
+    {
+      "C": 2.0,
+      "accuracy": 0.741123370110331,
+      "macro_f1": 0.5991306357542167,
+      "weighted_f1": 0.7713072247931873
+    }
+  ],
+  "convergence_warnings": [
+    {
+      "messages": [
+        "The max_iter was reached which means the coef_ did not converge"
+      ],
+      "stage": "candidate_C_0.5"
+    },
+    {
+      "messages": [
+        "The max_iter was reached which means the coef_ did not converge"
+      ],
+      "stage": "candidate_C_1.0"
+    },
+    {
+      "messages": [
+        "The max_iter was reached which means the coef_ did not converge"
+      ],
+      "stage": "candidate_C_2.0"
+    },
+    {
+      "messages": [
+        "The max_iter was reached which means the coef_ did not converge"
+      ],
+      "stage": "train_plus_validation"
+    },
+    {
+      "messages": [
+        "The max_iter was reached which means the coef_ did not converge"
+      ],
+      "stage": "oof_fold_1"
+    },
+    {
+      "messages": [
+        "The max_iter was reached which means the coef_ did not converge"
+      ],
+      "stage": "oof_fold_2"
+    },
+    {
+      "messages": [
+        "The max_iter was reached which means the coef_ did not converge"
+      ],
+      "stage": "oof_fold_3"
+    },
+    {
+      "messages": [
+        "The max_iter was reached which means the coef_ did not converge"
+      ],
+      "stage": "oof_fold_4"
+    },
+    {
+      "messages": [
+        "The max_iter was reached which means the coef_ did not converge"
+      ],
+      "stage": "oof_fold_5"
+    },
+    {
+      "messages": [
+        "The max_iter was reached which means the coef_ did not converge"
+      ],
+      "stage": "future_inference_full_data_model"
+    }
+  ],
+  "evaluation_model_version": "tfidf_logreg_v1",
+  "full_data_model": {
+    "model_file_sha256": "f3be40026a352dd279691ed7f1dc99665f997be6b367a3f7614e2d32555496db",
+    "purpose": "future unseen-review inference only",
+    "training_row_count": 99703,
+    "used_for_official_oof_predictions": false
+  },
+  "held_out_test": {
+    "accuracy": 0.8304081837328252,
+    "macro_f1": 0.606526929783907,
+    "macro_precision": 0.6562189771862946,
+    "macro_recall": 0.6483308752389383,
+    "per_class": {
+      "negative": {
+        "f1": 0.7046528987310277,
+        "precision": 0.5767820773930754,
+        "recall": 0.9053708439897699,
+        "support": 1564
+      },
+      "neutral": {
+        "f1": 0.18922852983988356,
+        "precision": 0.46099290780141844,
+        "recall": 0.11904761904761904,
+        "support": 1092
+      },
+      "positive": {
+        "f1": 0.9256993607808097,
+        "precision": 0.9308819463643904,
+        "recall": 0.9205741626794258,
+        "support": 7315
+      }
+    },
+    "weighted_f1": 0.8103706260467458
+  },
+  "input": {
+    "batch_id": "prod_v1_100k",
+    "input_sha256": "e10925187eea5fc34721778c0a6e2ea5b8c7492a1325fd0c49966dafe3f12714",
+    "label_distribution": {
+      "negative": 15640,
+      "neutral": 10913,
+      "positive": 73150
+    },
+    "row_count": 99703,
+    "unique_key_count": 99703
+  },
+  "official_prediction_model_version": "tfidf_logreg_oof_v1",
+  "oof_prediction": {
+    "contract_validation": {
+      "coverage": 1.0,
+      "duplicate_key_count": 0,
+      "inferred_at": "2026-07-22T10:52:50Z",
+      "label_distribution": {
+        "negative": 15899,
+        "neutral": 18943,
+        "positive": 64861
+      },
+      "missing_key_count": 0,
+      "model_version": "tfidf_logreg_oof_v1",
+      "pred_score": {
+        "max": 0.9999823570251465,
+        "mean": 0.7533969470694502,
+        "min": 0.3361221253871918
+      },
+      "prediction_file_sha256": "6f864870573275f38a610b3d9c6b0bed3250e208061d81d2fc45edfc20f40f95",
+      "prediction_file_size_bytes": 32095502,
+      "prediction_row_count": 99703,
+      "result": "PASS",
+      "unique_key_count": 99703,
+      "unknown_key_count": 0
+    },
+    "folds": [
+      {
+        "fold": 1,
+        "holdout_rows": 19941,
+        "training_rows": 79762
+      },
+      {
+        "fold": 2,
+        "holdout_rows": 19941,
+        "training_rows": 79762
+      },
+      {
+        "fold": 3,
+        "holdout_rows": 19941,
+        "training_rows": 79762
+      },
+      {
+        "fold": 4,
+        "holdout_rows": 19940,
+        "training_rows": 79763
+      },
+      {
+        "fold": 5,
+        "holdout_rows": 19940,
+        "training_rows": 79763
+      }
+    ],
+    "method": "5-fold Stratified Out-of-Fold",
+    "n_splits": 5,
+    "random_state": 42,
+    "shuffle": true,
+    "source_row_used_in_own_fold_training": false,
+    "weak_label_comparison": {
+      "accuracy": 0.7935368043087971,
+      "macro_f1": 0.6675232559572969,
+      "weighted_f1": 0.8134265022640129
+    }
+  },
+  "package_versions": {
+    "joblib": "1.5.3",
+    "matplotlib": "3.11.1",
+    "numpy": "2.5.1",
+    "python": "3.13.1",
+    "scikit_learn": "1.9.0"
+  },
+  "random_state": 42,
+  "result": "PASS",
+  "selected_C": 0.5,
+  "selection_rule": "highest validation macro_f1, then accuracy",
+  "split": {
+    "test": {
+      "label_counts": {
+        "negative": 1564,
+        "neutral": 1092,
+        "positive": 7315
+      },
+      "label_percentages": {
+        "negative": 0.15685487914953364,
+        "neutral": 0.10951760104302477,
+        "positive": 0.7336275198074416
+      },
+      "row_count": 9971
+    },
+    "train": {
+      "label_counts": {
+        "negative": 12512,
+        "neutral": 8730,
+        "positive": 58520
+      },
+      "label_percentages": {
+        "negative": 0.15686667836814525,
+        "neutral": 0.10945061558135454,
+        "positive": 0.7336827060505002
+      },
+      "row_count": 79762
+    },
+    "validation": {
+      "label_counts": {
+        "negative": 1564,
+        "neutral": 1091,
+        "positive": 7315
+      },
+      "label_percentages": {
+        "negative": 0.15687061183550652,
+        "neutral": 0.10942828485456368,
+        "positive": 0.7337011033099298
+      },
+      "row_count": 9970
+    }
+  }
+}
