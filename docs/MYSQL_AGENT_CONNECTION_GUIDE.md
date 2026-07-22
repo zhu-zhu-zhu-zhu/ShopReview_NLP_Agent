@@ -58,3 +58,22 @@ WHERE load_batch_id='prod_v1_100k'
 ```
 
 本机与 LAN IP 的 3306 TCP 测试均已通过，网络就绪状态为 READY。MySQL 数据与账户已准备好，但 FastAPI/Agent 实时集成仍待 Agent 开发者完成。
+
+## 五、LAN 连接排障
+
+数据所有者电脑的 LAN IPv4 可能在重连 Wi‑Fi 或热点后变化。Agent 开发者应先执行 `Test-NetConnection <CURRENT_MYSQL_HOST> -Port 3306`，只有 `TcpTestSucceeded=True` 后再测试 MySQL 脚本、FastAPI health 和 KPI；TCP 超时发生在认证之前，不应先改密码。
+
+Windows 防火墙只允许创建以下窄范围规则：Private profile、TCP 3306、`RemoteAddress` 为 Agent 笔记本当前的单一私网 IPv4。不要使用 Any、Public profile，也不要公开转发 3306。数据所有者端可使用：
+
+```powershell
+.\scripts\configure_agent_mysql_lan_access.ps1 `
+  -AgentIp "ACTUAL_AGENT_LAPTOP_IPV4"
+```
+
+在 Agent IP 尚未确认时，不创建防火墙规则。可先用只读模式检查本机服务：
+
+```powershell
+.\scripts\configure_agent_mysql_lan_access.ps1 -ValidateOnly
+```
+
+若容器绑定、本机 TCP、LAN 主机 TCP 和精确 IP 防火墙规则均正常，但另一台电脑仍超时，应依次检查：两台电脑是否位于同一私网或手机热点、两端 VPN/代理是否影响路由，并可临时把 FastAPI/Agent 放到数据所有者电脑本地运行。只有团队明确同意时才考虑安全 overlay network；不要使用路由器公共端口转发。
