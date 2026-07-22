@@ -383,6 +383,8 @@ def make_summary(
     business_totals: dict[str, Any],
     result: str,
     mysql_validation: dict[str, Any] | None = None,
+    mysql_port: int = 3306,
+    remote_access_status: str = "NOT_CHECKED",
 ) -> dict[str, Any]:
     source_counts = {
         "overview": len(datasets[OVERVIEW_SPEC.name]),
@@ -394,6 +396,9 @@ def make_summary(
         "result": result,
         "batch_id": batch_id,
         "model_version": model_version,
+        "mysql_database": DATABASE_NAME,
+        "mysql_port": mysql_port,
+        "remote_access_status": remote_access_status,
         "hive_export_status": "PASS",
         "local_export_validation_status": "PASS",
         "hive_source_counts": source_counts,
@@ -486,6 +491,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--summary-path", type=Path, required=True)
     parser.add_argument("--validate-only", action="store_true")
     parser.add_argument("--source-only", action="store_true")
+    parser.add_argument(
+        "--remote-access-status",
+        choices=("READY", "PENDING_FIREWALL", "NOT_CHECKED"),
+        default="NOT_CHECKED",
+    )
     return parser
 
 
@@ -500,9 +510,24 @@ def main(argv: Iterable[str] | None = None) -> int:
         args.batch_id,
         args.model_version,
     )
+    remote_access_status = args.remote_access_status
+    if remote_access_status == "NOT_CHECKED" and args.summary_path.is_file():
+        try:
+            previous_summary = json.loads(args.summary_path.read_text(encoding="utf-8"))
+            previous_status = previous_summary.get("remote_access_status")
+            if previous_status in {"READY", "PENDING_FIREWALL"}:
+                remote_access_status = previous_status
+        except (OSError, json.JSONDecodeError):
+            pass
     if args.source_only:
         summary = make_summary(
-            args.batch_id, args.model_version, datasets, business_totals, "PENDING"
+            args.batch_id,
+            args.model_version,
+            datasets,
+            business_totals,
+            "PENDING",
+            mysql_port=args.port,
+            remote_access_status=remote_access_status,
         )
     else:
         if not args.user:
@@ -515,6 +540,8 @@ def main(argv: Iterable[str] | None = None) -> int:
             business_totals,
             "PASS",
             mysql_validation,
+            mysql_port=args.port,
+            remote_access_status=remote_access_status,
         )
     write_summary_atomic(args.summary_path, summary)
     counts = summary["hive_source_counts"]

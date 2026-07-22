@@ -33,14 +33,12 @@
 - production-v1 正式 NLP 输入导出与交付验证；
 - `tfidf_logreg_oof_v1` 真实 OOF 预测导入与 production Hive DWS；
 - Hive DWS → MySQL 服务层同步实现与合成单元测试；
-- production Hive DWS 的 MySQL ExportOnly 本地导出与校验。
+- production Hive DWS 的 MySQL ExportOnly 本地导出与校验；
+- 独立 `shopreview_mysql` 服务实例、三张 serving 表与 Hive/MySQL 对账；
+- Agent 专用只读 `agent_reader` 账户和本地安全连接交接。
 
 ### 尚未完成
 
-- 本机 MySQL Server 配置与 writer 凭据；
-- 实际 MySQL 服务层数据同步；
-- Hive/MySQL 对账；
-- Agent 专用只读 `agent_reader` 账户；
 - 真实方面提取；
 - Agent FastAPI 集成；
 - Dashboard；

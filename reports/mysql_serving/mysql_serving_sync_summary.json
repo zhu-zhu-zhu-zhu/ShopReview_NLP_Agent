@@ -2,7 +2,11 @@
   "batch_id": "prod_v1_100k",
   "credential_safety_status": "PASS",
   "duplicate_key_counts": {
-    "mysql": null,
+    "mysql": {
+      "dws_product_sentiment": 0,
+      "dws_sentiment_daily": 0,
+      "dws_sentiment_overview": 0
+    },
     "source": {
       "dws_product_sentiment": 0,
       "dws_sentiment_daily": 0,
@@ -22,8 +26,14 @@
   },
   "local_export_validation_status": "PASS",
   "model_version": "tfidf_logreg_oof_v1",
-  "mysql_sync_status": "PENDING",
-  "mysql_target_counts": null,
+  "mysql_database": "shopreview_serving",
+  "mysql_port": 3306,
+  "mysql_sync_status": "PASS",
+  "mysql_target_counts": {
+    "dws_product_sentiment": 76784,
+    "dws_sentiment_daily": 4137,
+    "dws_sentiment_overview": 1
+  },
   "overview_business_totals": {
     "daily_review_count_sum": 99703,
     "negative_count": 15899,
@@ -35,13 +45,14 @@
     "sentiment_count_sum": 99703
   },
   "rate_validation": {
-    "mysql_invalid_rows": null,
+    "mysql_invalid_rows": 0,
     "source_invalid_rows": 0
   },
-  "reason": "MySQL port 3306 unavailable and credentials not configured",
-  "reconciliation_status": "PENDING",
-  "result": "PENDING",
-  "synchronized_at_utc": "2026-07-22T13:30:09Z",
+  "reason": null,
+  "reconciliation_status": "PASS",
+  "remote_access_status": "READY",
+  "result": "PASS",
+  "synchronized_at_utc": "2026-07-22T13:44:54Z",
   "table_names": [
     "shopreview_serving.dws_sentiment_overview",
     "shopreview_serving.dws_sentiment_daily",

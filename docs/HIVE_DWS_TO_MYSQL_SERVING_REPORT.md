@@ -18,11 +18,11 @@ Hive DWS 负责 production-v1 的离线数仓计算，MySQL 用作未来 FastAPI
 
 | 数据集 | Hive 实测行数 | 本地导出行数 | MySQL 行数 |
 |---|---:|---:|---:|
-| overview | 1 | 1 | PENDING |
-| daily | 4,137 | 4,137 | PENDING |
-| product | 76,784 | 76,784 | PENDING |
+| overview | 1 | 1 | 1 |
+| daily | 4,137 | 4,137 | 4,137 |
+| product | 76,784 | 76,784 | 76,784 |
 
-overview 的 `review_count` 为 99,703。本次 Hive ExportOnly 已完成；MySQL 3306 未监听且 writer 凭据未配置，因此没有连接或修改 MySQL。
+overview 的 `review_count` 为 99,703。服务层使用独立 Docker 容器 `shopreview_mysql`、命名卷 `shopreview_mysql_data` 和本机端口 3306，不使用或修改 Hive Metastore MySQL。
 
 ## 四、MySQL 表设计
 
@@ -38,7 +38,7 @@ Hive Production DWS
 → Hive/MySQL 行数与业务总量对账
 ```
 
-当前只执行到本地安全导出和 Python 校验。MySQL 事务与最终对账尚未执行。
+完整流程已执行。同步器只删除精确 batch/model 范围，三表插入与验收位于同一个事务；`ValidateOnly` 随后以只读方式再次通过。
 
 ## 六、数据质量
 
@@ -51,11 +51,16 @@ Hive Production DWS
 | 情感计数和与 review_count | PASS |
 | 本地主键重复 | 0 |
 | 本地非法比率 | 0 |
-| Hive/MySQL 对账 | PENDING |
+| MySQL 主键重复 | 0 |
+| MySQL 非法比率 | 0 |
+| 意外 batch/model | 0 |
+| positive / neutral / negative | 64,861 / 18,943 / 15,899 |
+| 情感计数合计 | 99,703 |
+| Hive/MySQL 对账 | PASS |
 
 ## 七、Agent 连接方式
 
-后续采用 `MySQL → FastAPI → Agent`。Agent 只调用 FastAPI 暴露的受控查询工具，不使用 root，也不直接访问 Hive。
+后续采用 `MySQL → FastAPI → Agent`。已创建临时 LAN 兼容的 `agent_reader@'%'`，其授权仅为 `SELECT ON shopreview_serving.*`。确定 Agent 电脑 IP 后，应把来源限制为该具体 LAN IP。
 
 ## 八、安全说明
 
@@ -64,24 +69,28 @@ Hive Production DWS
 - MySQL 3306 不得暴露到公共互联网；
 - 本次没有同步原始评论、评论文本、DWD 明细或用户标识；
 - `.env.mysql.local` 和本地导出目录由 Git 忽略。
+- reader 密码只保存在 `.env.mysql.agent.local` 与本地 handoff 文件中，均由 Git 忽略。
 
 ## 九、限制
 
 - 当前只覆盖一个 production batch/model；
-- MySQL Server 与 writer 凭据尚未配置；
-- MySQL 同步和 Hive/MySQL 最终对账仍为 PENDING；
+- 当前 LAN 主机为 `10.38.193.232:3306`，网络变化后地址可能改变；
+- `agent_reader@'%'` 是临时 LAN 兼容配置，应在 Agent 电脑 IP 确定后收紧；
+- FastAPI 与 Agent 的实时业务调用尚未执行；
 - MySQL 是服务副本，Hive DWS 仍是权威来源。
 
 ## 十、验收结果
 
-Hive DWS 导出及本地文件校验通过。由于 MySQL 不可用，不报告 MySQL PASS。
+Hive 导出、本地校验、MySQL 事务同步、业务对账、只读账户和 ValidateOnly 均通过。
 
 HIVE DWS EXPORT RESULT: PASS
 
 LOCAL EXPORT VALIDATION RESULT: PASS
 
-MYSQL SERVING SYNC RESULT: PENDING
+MYSQL SERVING SYNC RESULT: PASS
 
-HIVE MYSQL RECONCILIATION RESULT: PENDING
+HIVE MYSQL RECONCILIATION RESULT: PASS
 
 CREDENTIAL SAFETY RESULT: PASS
+
+AGENT READ-ONLY USER RESULT: PASS
