@@ -1,0 +1,48 @@
+{
+  "aspect_extraction_method": "keyword_rules_v1",
+  "batch_id": "prod_v1_100k",
+  "existing_v1_counts_preserved": {
+    "dws_product_sentiment": 76784,
+    "dws_sentiment_daily": 4137,
+    "dws_sentiment_overview": 1
+  },
+  "hive_export_counts": {
+    "dws_aspect_summary": 8,
+    "dws_category_sentiment": 1,
+    "dws_monthly_sentiment": 200,
+    "dws_negative_reasons": 9,
+    "dws_prediction_confidence": 4,
+    "dws_rating_prediction_matrix": 15,
+    "dws_review_samples": 150,
+    "dws_sentiment_alerts": 179,
+    "dws_store_sentiment": 24269,
+    "dws_verified_purchase_sentiment": 2
+  },
+  "model_version": "tfidf_logreg_oof_v1",
+  "mysql_counts": {
+    "dws_aspect_summary": 8,
+    "dws_category_sentiment": 1,
+    "dws_monthly_sentiment": 200,
+    "dws_negative_reasons": 9,
+    "dws_prediction_confidence": 4,
+    "dws_product_sentiment": 76784,
+    "dws_rating_prediction_matrix": 15,
+    "dws_review_samples": 150,
+    "dws_sentiment_alerts": 179,
+    "dws_sentiment_daily": 4137,
+    "dws_sentiment_overview": 1,
+    "dws_store_sentiment": 24269,
+    "dws_verified_purchase_sentiment": 2
+  },
+  "negative_reason_extraction_method": "keyword_rules_v1",
+  "result": "PASS",
+  "source_review_totals": {
+    "dws_category_sentiment": 99703,
+    "dws_monthly_sentiment": 99703,
+    "dws_prediction_confidence": 99703,
+    "dws_rating_prediction_matrix": 99703,
+    "dws_store_sentiment": 99703,
+    "dws_verified_purchase_sentiment": 99703
+  },
+  "synchronized_at_utc": "2026-07-23T04:50:17Z"
+}

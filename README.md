@@ -35,11 +35,15 @@
 - Hive DWS → MySQL 服务层同步实现与合成单元测试；
 - production Hive DWS 的 MySQL ExportOnly 本地导出与校验；
 - 独立 `shopreview_mysql` 服务实例、三张 serving 表与 Hive/MySQL 对账；
-- Agent 专用只读 `agent_reader` 账户和本地安全连接交接。
+- Agent 专用只读 `agent_reader` 账户和本地安全连接交接；
+- Production DWS v2 十张扩展指标表与 13 表 MySQL serving 层；
+- `keyword_rules_v1` 方面汇总和差评原因汇总；
+- Hive/MySQL v2 逐表对账与 `shopreview_serving_prod_v2.zip` 数据库交接包。
 
 ### 尚未完成
 
-- 真实方面提取；
-- Agent FastAPI 集成；
-- Dashboard；
+- Agent/FastAPI 新增十表路由；
+- 前端组件集成；
+- 演示与展示验证；
+- 可选的未来学习型方面模型；
 - Agent 最终集成。
