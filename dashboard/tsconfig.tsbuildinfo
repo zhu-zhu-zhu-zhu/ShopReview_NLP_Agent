@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/labels.ts","./src/main.tsx","./src/types.ts","./src/vite-env.d.ts","./src/components/aspectbarchart.tsx","./src/components/chartview.tsx","./src/components/producttable.tsx","./src/components/reasonlist.tsx","./src/components/sentimentsharechart.tsx"],"version":"5.6.3"}

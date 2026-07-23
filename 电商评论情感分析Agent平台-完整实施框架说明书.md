@@ -13,9 +13,12 @@
 
 把公开电商评论数据集建成：
 
-**CSV → HDFS → Hive ODS → Hive DWD（清洗）→ NLP 情感/方面分析 → Hive DWS →（可选 MySQL）→ 可视化大屏 + 评论洞察 Agent**
+**JSONL（Amazon Fashion 评论 + 商品元数据）→ HDFS → Hive ODS → Hive DWD（清洗）→ NLP 情感/方面分析 → Hive DWS → 安全 JSON 导出 /（可选 MySQL）→ FastAPI + 可视化大屏 + 评论洞察 Agent**
 
 交付一条可答辩演示的闭环：入仓可验收、模型可对比、大屏可展示、Agent 可问数/出报告。
+
+> **数据源说明**：主数据集为 Amazon Reviews 2023 · `Amazon_Fashion`（英文 JSONL 双文件，经 `parent_asin` 关联）。原「CSV」表述已按实际决策调整；细节见 `docs/DATA_DEV_FRAMEWORK_ALIGNMENT.md`。  
+> **产品层顺序**：阶段 F 产出 `exports/agent/smoke/` 后，先做 **阶段 G（FastAPI + 可视化大屏，G-now 读 smoke）**，验收后再做 **阶段 H（Agent 调同一套 API）**。展开见 `docs/阶段G_服务层与大屏开发说明书.md`、`docs/阶段H_Agent开发说明书.md`。
 
 ---
 
@@ -106,8 +109,9 @@
 
 5. **拍板 Agent 范围（防爆炸）**  
    - 必做：问数（3～5 个固定剧本）+ 生成周报 Markdown  
-   - 选做：差评突发告警文案、方面对比解读  
-   - 禁止：让 Agent 直接改仓内数据、执行任意 DDL
+   - 选做：差评突发告警文案、方面对比解读、脱敏样例评论  
+   - 禁止：让 Agent 直接改仓内数据、执行任意 DDL、从原始 JSONL 重算指标、把 smoke 烟测指标说成全站运营结论  
+   - 数据源顺序：优先消费数仓安全导出 / API；**不得**绕过白名单工具编造数字
 
 6. **确认小组分工与里程碑日期**（写入 `docs/team_plan.md`）
 
@@ -149,15 +153,17 @@ ShopReview_NLP_Agent/
 │   ├── phase_*.md             # 各阶段验收清单
 │   └── architecture.md
 ├── data/
-│   ├── raw/                   # 原始 CSV（勿提交超大文件到 git）
+│   ├── raw/                   # 原始 JSONL 路径建议仅本地配置（勿提交超大文件到 git）
 │   ├── sample/                # 小样本
-│   ├── processed/             # 本地清洗中间结果
+│   ├── processed/             # 本地清洗中间结果 / NLP 交接文件
 │   └── state/                 # 断点、抽样清单
+├── exports/
+│   └── agent/                 # 数仓→Agent 安全 JSON（如 smoke/）
 ├── sql/
-│   ├── 01_ods_review.sql
-│   ├── 02_dwd_review.sql
-│   ├── 03_dws_tables.sql
-│   └── 04_qa_*.sql
+│   ├── ods/                   # ODS 建表
+│   ├── dwd/                   # DWD / NLP 契约 / 预测导入
+│   ├── dws/                   # DWS 聚合
+│   └── validation/            # 对账 SQL
 ├── scripts/
 │   ├── download_dataset.py
 │   ├── sample_dataset.py
@@ -182,9 +188,12 @@ ShopReview_NLP_Agent/
 │   ├── app/services/
 │   └── requirements.txt
 ├── agent/
+│   ├── adapters/              # smoke JSON / HTTP 双适配器
+│   ├── contracts/             # 与 exports 字段映射
 │   ├── tools/                 # 查询、报告工具
 │   ├── prompts/
 │   ├── orchestrator.py
+│   ├── offline_demo.py
 │   └── demo_scripts.md        # 答辩固定问法
 ├── dashboard/                 # 大屏前端（或文档说明复用路径）
 └── reports/                   # 自动生成的周报、评估表
@@ -530,135 +539,151 @@ ShopReview_NLP_Agent/
 
 ## 10. 阶段 G：服务层 + 可视化大屏
 
+> 展开规格以 **`docs/阶段G_服务层与大屏开发说明书.md`（Draft v0.1）** 为准；本节为总框架摘要。
+
 ### 目的
 
-把 DWS 变成「可演示产品」，而不是一堆表。
+把 DWS/安全导出变成「可演示产品」：FastAPI 指标服务 + 一屏情感洞察大屏；并**锁定与 Agent 共用的 HTTP 契约**。
+
+### 推荐顺序
+
+```text
+阶段 F（含 exports/agent/smoke）
+    → 阶段 G：API + 大屏（G-now 读 smoke）
+    → 阶段 H：Agent 调同一套 /api/*
+```
+
+`exports/agent/smoke` 是下游安全指标包（大屏与 Agent 共用），不表示仅 Agent 可读。  
+**先完成可演示大屏与核心 API，再进入 Agent 开发。**
+
+### 数据源策略
+
+| 模式 | 条件 | 后端行为 |
+|------|------|----------|
+| **G-now / smoke** | 存在 `exports/agent/smoke/` | `SmokeJsonProvider` 读 JSON；立即可做大屏 |
+| **G-later** | production DWS / MySQL 就绪 | 同一路由换 Provider |
 
 ### 步骤清单
 
-1. **（可选）同步 MySQL**  
-   - 库：`review_sentiment`  
-   - 表与 DWS 对齐；Upsert 或按日覆盖  
-   - 脚本：`scripts/sync_to_mysql.py`
+1. **（可选）同步 MySQL** — G-now 非必须；有正式指标后再做。  
 
-2. **FastAPI 后端 `backend/app/main.py`**  
-   建议接口（与大屏/Agent 共用）：  
+2. **FastAPI 后端**（与大屏/Agent 共用；**加粗为 G-now 必做**）：  
 
-   | 接口 | 作用 |
-   |------|------|
-   | `GET /api/health` | 健康检查 |
-   | `GET /api/kpi` | 总评论、负面率、不一致率等 |
-   | `GET /api/trend` | 情感日趋势 |
-   | `GET /api/top-negative-products` | 差评商品 TOP |
-   | `GET /api/aspects` | 方面分布/趋势 |
-   | `GET /api/alerts` | 告警列表 |
-   | `GET /api/samples` | 差评样例文本（脱敏） |
+   | 接口 | 作用 | 与 smoke 的关系 |
+   |------|------|-----------------|
+   | `GET /api/health` | 健康检查 + `data_mode` / 是否生产指标 | ← `manifest.json` |
+   | **`GET /api/kpi`** | 总览 | ← `sentiment_overview.json` |
+   | **`GET /api/top-negative-products`** | 差评商品 TOP（`parent_asin`） | ← `product_sentiment.json` |
+   | **`GET /api/aspects`** | 方面/原因 | ← `aspect_summary.json` |
+   | **`GET /api/negative-reasons`** | 商品×差评原因 | ← `negative_reasons.json` |
+   | `GET /api/trend` | 日趋势 | ⏸ 无则明确未实现 |
+   | `GET /api/alerts` | 告警 | ⏸ 可选 |
+   | `GET /api/samples` | 脱敏样例 | ⏸ 可选 |
 
-3. **大屏面板设计（一屏讲完故事）**
+3. **大屏面板（按 smoke 能力，勿强行假趋势）**
 
    | 区域 | 内容 |
    |------|------|
-   | 顶栏 | 项目名「评论情感洞察」+ 数据时间窗 |
-   | KPI | 评论量 / 负面率 / 高星负文率 / Top 差评品类 |
-   | 中央 | 情感趋势（正中负堆积或负面率折线） |
-   | 左 | 方面负面占比（饼/条） |
-   | 右 | 差评商品 TOP10 + 告警 |
-   | 底 | 样例差评滚动 / 数据源说明 |
+   | 顶栏 | 项目名 + Smoke/非生产角标 + `data_scope` |
+   | KPI | 评论量 / 三率 / 均分 |
+   | 中央 | 正中负**占比快照**（非近 7 日折线） |
+   | 左 | 方面负面（服装受控词 + 中文标签） |
+   | 右 | 差评商品 TOP + 差评原因 |
+   | 底 | 数据源说明 |
 
-4. **前端实现**  
-   - 优先复用已有大屏壳，改 API 与文案  
-   - 开发模式关闭 Mock，直连后端  
-   - 准备一键启动脚本：`dashboard/start.bat`、`backend/start.bat`
+4. **前端**  
+   - 经 API 取数；禁止静默假数  
+   - 复用既有大屏壳；`dashboard/start.bat`、`backend/start.bat`  
 
-5. **截图与录屏**  
-   - 全屏大屏图进结项报告  
-   - 30～60 秒操作录屏备用
+5. **截图与录屏**进结项材料；输出 `docs/api_contract_v0.md` 供阶段 H 使用。
 
 ### 阶段产出
 
-- 可访问的 API + 大屏  
-- `docs/phase_G_checklist.md`  
-- 大屏截图素材
+- 可访问的 API + 大屏（G-now）  
+- `docs/api_contract_v0.md`、`docs/phase_G_checklist.md`  
+- 大屏截图素材  
 
 ### 验收标准
 
-- `/api/health` 正常；KPI 与 Hive/MySQL 抽样一致  
-- 大屏四类核心面板有真实数据  
-- 断网或后端挂掉时有明确错误提示（不要静默 Mock 瞒过答辩）
+- `/api/health` 正常且暴露局限字段；核心接口与 smoke JSON 对账一致  
+- 大屏一屏能讲完故事，并展示非生产 / `data_scope`  
+- 断后端有明确错误；趋势/告警/样例未实现时不伪装  
 
 ### 风险点
 
-- 跨域与端口：统一 `5173/8080` 一类约定  
-- 大屏数据写死：验收时当场改日期参数验证
+- 空等正式 DWS → 用 G-now  
+- 字段与 Agent 两套 → G 阶段锁契约  
+- 小样本刷榜 → `min_reviews` 可配并 UI 说明  
 
 ---
 
 ## 11. 阶段 H：评论洞察 Agent（差异化）
 
+> 展开规格以 **`docs/阶段H_Agent开发说明书.md`** 为准；本节为总框架摘要。  
+> **前置：阶段 G 核心 API + 大屏已可演示**（Agent 优先调 HTTP，与大屏数字一致）。
+
 ### 目的
 
 实现「预测/分析 → 解读 → 行动建议」闭环，对齐选题介绍中的 Agent 思路，但工具白名单可控。
 
+### 数据源策略
+
+| 模式 | 条件 | Agent 行为 |
+|------|------|------------|
+| **主路径 / http** | 阶段 G API 就绪 | `HttpApiAdapter` 调 `/api/*`（与大屏同一后端） |
+| **兜底 / smoke 或 offline** | 后端短暂不可用或无 Key | 可读 smoke JSON 或离线剧本；须标注局限 |
+
+禁止：任意 SQL、读原始 JSONL 重算指标、把 `production_business_metrics=false` 的结果说成全站运营结论。  
+**开发顺序：先 G 后 H；不要跳过可演示大屏直接做 Agent 主演示。**
+
 ### 步骤清单
 
 1. **定义 Agent 角色与系统提示**（`agent/prompts/system.md`）  
-   - 你是电商评论分析助手；只能通过工具取数；回答必须给出数据出处与时间窗；不确定就说不确定。
+   - 只能通过工具取数；必须复述 `data_scope` / 数据局限；不确定就说不确定；商品主键用 `parent_asin`。
 
-2. **注册工具（Function Calling）——只做这些**
+2. **适配器 + 注册工具（Function Calling）**
 
-   | 工具名 | 功能 | 实现 |
-   |--------|------|------|
-   | `get_kpi` | 总览指标 | 调后端 `/api/kpi` |
-   | `get_sentiment_trend` | 趋势 | `/api/trend` |
-   | `get_top_negative_products` | 差评榜 | `/api/top-negative-products` |
-   | `get_aspect_stats` | 方面统计 | `/api/aspects` |
-   | `get_alerts` | 告警 | `/api/alerts` |
-   | `search_review_samples` | 样例评论 | `/api/samples` |
-   | `generate_weekly_report` | 生成周报 md | 聚合上述工具结果填模板 |
+   | 工具名 | 功能 | 主路径（HTTP） | 兜底 |
+   |--------|------|----------------|------|
+   | `get_kpi` | 总览指标 | `/api/kpi` | smoke overview |
+   | `get_top_negative_products` | 差评榜 | `/api/top-negative-products` | smoke products |
+   | `get_aspect_stats` | 方面统计 | `/api/aspects` | smoke aspects |
+   | `get_negative_reasons` | 差评原因 | `/api/negative-reasons` | smoke reasons |
+   | `generate_weekly_report` | 周报 md | 聚合上述工具 | 同左 |
+   | `get_sentiment_trend` | 趋势 | `/api/trend`（有则） | 诚实失败 |
+   | `get_alerts` | 告警 | `/api/alerts`（有则） | 诚实失败 |
+   | `search_review_samples` | 脱敏样例 | `/api/samples`（有则） | 诚实失败 |
 
 3. **编排实现 `agent/orchestrator.py`**  
-   - 推荐：ReAct / OpenAI tools 循环（最多 N 步）  
-   - 记录每次 tool call 日志，便于答辩展示「Agent 确实在调工具」  
-   - 配置：API Key 放环境变量，禁止写进仓库
+   - ReAct / tools 循环；记录 tool call（含 `source`）  
+   - Key 仅环境变量；支持 `AGENT_DATA_MODE=http|smoke`、`AGENT_OFFLINE=1`
 
-4. **答辩固定剧本（必须写进 `agent/demo_scripts.md`）**
+4. **答辩固定剧本**（与大屏口径一致，见阶段 H 说明书 §8）
 
-   1. 「最近 7 天整体负面率是多少？和前 7 天比呢？」  
-   2. 「负面率最高的 5 个商品是什么？主要差在哪些方面？」  
-   3. 「有没有高星级但文本很负的异常评论？举 3 个例子。」  
-   4. 「请生成本周评论情感分析周报。」  
-   5. （选）「物流方面差评是否在上升？」
+5. **前端入口**：大屏「智能问答」抽屉或 `/agent` 页；展示 steps / answer  
 
-5. **前端入口**  
-   - 大屏侧边「智能问答」抽屉，或独立 `/agent` 页  
-   - 展示：思考步骤 / 调用了哪些工具 / 最终答案
-
-6. **安全与稳定性**  
-   - 工具参数校验（日期格式、limit 上限）  
-   - 超时与重试；LLM 失败时仍可展示工具原始 JSON  
-   - 提示词注入防护：用户输入不当作 SQL
+6. **安全与稳定性**：参数校验、超时；离线优先复用真实导出/API 结果，不另造假数  
 
 ### 阶段产出
 
 - 可演示 Agent  
-- 工具日志样例  
-- 自动周报 `reports/weekly_*.md`  
-- `docs/phase_H_checklist.md`
+- 工具日志样例、`reports/weekly_*.md`  
+- `docs/phase_H_checklist.md`  
 
 ### 验收标准
 
-- 5 个剧本中至少 **4 个稳定可跑**  
-- 答案中能看到具体数字，且与 API/大屏一致  
-- 周报文件成功生成  
-- 日志能证明发生了 tool call（不是纯编造）
+- 修订剧本 ≥ **4/5** 稳定可跑  
+- 数字与 **API/大屏** 一致（抽查）  
+- 周报成功；smoke/非生产时必须说明局限  
+- 日志证明发生了 tool call  
 
 ### 风险点
 
-- 无 Key / 网络不通：准备「离线演示模式」（预设 tool 结果 + 模板回答）作为 Plan B  
-- Agent 幻觉：强制「必须先调工具再回答」
+- 无 Key / 网络差 → 离线 Plan B  
+- 幻觉改数字 → 强制先工具  
+- 跳过 G 直接做 Agent → 演示与大屏对不上；必须先完成 G 核心验收  
 
 ---
-
 ## 12. 阶段 I：验收、结项报告与答辩
 
 ### 目的
@@ -718,12 +743,12 @@ ShopReview_NLP_Agent/
 | 第 1 天下午 | B 数据 | 0.5 天 |
 | 第 2 天 | C ODS + D DWD | 1 天 |
 | 第 3～4 天 | E NLP | 1.5～2 天 |
-| 第 5 天 | F DWS + 方面 | 1 天 |
-| 第 6 天 | G 大屏 + API | 1 天 |
-| 第 7 天 | H Agent | 1 天 |
+| 第 5 天 | F DWS + 方面 + 下游安全导出 | 1 天 |
+| 第 6 天 | G 服务层 + 可视化大屏（G-now 读 smoke） | 1 天 |
+| 第 7 天 | H Agent（调阶段 G 同一套 API） | 1 天 |
 | 第 8 天 | I 结项与彩排 | 1 天 |
 
-**原则：每阶段 checklist 勾完再进下一阶段。**
+**原则：关键路径 checklist 勾完再宣称阶段完成；产品层顺序为 F → G → H，先可演示大屏与 API，再做 Agent。**
 
 ---
 
@@ -733,10 +758,12 @@ ShopReview_NLP_Agent/
 2. 抽样上限：多少万条？哪些品类？  
 3. 标签：星级映射 or 自带标签？  
 4. 主模型：哪个预训练模型？有无 GPU？  
-5. DWS 服务：MySQL or JSON/SQLite？  
-6. Agent：哪家 LLM API？有无离线 Plan B？  
+5. DWS 服务：G-now 先用 smoke JSON API，还是同步 MySQL？  
+6. Agent：哪家 LLM API？有无离线 Plan B？（主路径应调阶段 G 的 HTTP）  
 7. 大屏：新建 or 复用哪个前端壳？  
-8. 库名：Hive `review_dw` 是否确认？
+8. 库名：Hive `review_dw` 是否确认？  
+9. 方面词表：是否确认服装受控英文词（见 `ASPECT_WAREHOUSE_CONTRACT`）？  
+10. API 字段契约：是否以 smoke v0 + `parent_asin` 为 G/H 共用基准？
 
 ---
 
@@ -759,7 +786,7 @@ ShopReview_NLP_Agent/
 - **同意本说明书**：回复「按框架开始」，并回复第 14 节决策（或「按推荐：Amazon 抽样 + 星级弱标签 + 复用大屏壳 + DeepSeek/通义 Agent」）。  
 - **要改**：例如必须中文数据、不做方面、先不做 MySQL——说清楚后改 charter 再动手。
 
-**文档状态**：实施框架已定稿；未默认等同于已执行建表/训练/部署。
+**文档状态**：实施框架已定稿，并已按 Amazon Fashion JSONL、Phase F 下游安全导出、以及 **F → G（大屏+API）→ H（Agent）** 顺序做对齐修订；未默认等同于已执行建表/训练/部署/大屏/Agent 代码。阶段 G/H 细节分别以 `docs/阶段G_服务层与大屏开发说明书.md`、`docs/阶段H_Agent开发说明书.md` 为准。
 
 ---
 
@@ -779,7 +806,12 @@ docs/data_card.md
 docs/data_dictionary.md
 docs/model_evaluation.md
 docs/architecture.md
+docs/阶段G_服务层与大屏开发说明书.md
+docs/阶段H_Agent开发说明书.md
+docs/api_contract_v0.md
+exports/agent/smoke/manifest.json
 agent/demo_scripts.md
+agent/contracts/smoke_export_v0.md
 ```
 
 ## 附录 B：选题与评分对齐（答辩自检）

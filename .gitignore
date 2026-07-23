@@ -28,8 +28,13 @@ dist/
 .env
 .env.*
 !.env.example
+!agent/.env.example
 .env.local
 .env.*.local
+
+# Agent tool logs
+agent/logs/*
+!agent/logs/.gitkeep
 
 # 本地检查缓存
 *.sqlite
@@ -38,8 +43,16 @@ dist/
 *.wal
 *.shm
 
-# 本地 smoke / 已停止的完整检查输出
-reports/data_inspection/smoke_*
+# 本地 MySQL dump / 解压 / 交接包（勿提交）
+shopreview_serving_prod_v1.zip
+shopreview_serving_prod_v1_sha256.txt
+shopreview_serving_prod_v1.sql
+shopreview_serving_prod_v2.zip
+shopreview_serving_prod_v2_sha256.txt
+shopreview_serving_prod_v2.sql
+nlp_prod_v1_handoff.zip
+tmp_serving_dump/
+tmp_serving_dump_v2/
 reports/data_inspection/amazon_fashion_profile.json
 reports/data_inspection/sample_manifest.json
 

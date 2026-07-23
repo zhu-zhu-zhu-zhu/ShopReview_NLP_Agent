@@ -1,0 +1,3 @@
+# Stage H Agent
+python-dotenv>=1.0.0
+openai>=1.40.0
