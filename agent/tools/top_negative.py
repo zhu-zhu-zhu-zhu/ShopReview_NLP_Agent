@@ -9,7 +9,7 @@ from agent.tools.base import as_tool_dict, clamp_int, get_adapter
 DESCRIPTION = (
     "按负面率等排序返回差评商品列表。"
     "商品主键为 parent_asin（不是 product_id）。"
-    "smoke 小样本下 min_reviews 建议为 1。"
+    "支持使用最少评论数过滤低样本商品。"
 )
 
 OPENAI_SCHEMA: dict[str, Any] = {
@@ -26,7 +26,7 @@ OPENAI_SCHEMA: dict[str, Any] = {
                 },
                 "min_reviews": {
                     "type": "integer",
-                    "description": "最少评论数过滤；smoke 默认 1",
+                    "description": "最少评论数过滤",
                 },
             },
             "additionalProperties": False,

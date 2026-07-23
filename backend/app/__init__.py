@@ -1,1 +1,1 @@
-"""ShopReview stage-G FastAPI application package."""
+"""ShopReview production FastAPI application package."""

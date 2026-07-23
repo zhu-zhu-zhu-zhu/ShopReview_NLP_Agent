@@ -3,10 +3,7 @@ param(
     [string]$ReviewPath,
 
     [Parameter(Mandatory = $true)]
-    [string]$MetaPath,
-
-    [ValidateSet('smoke', 'bounded')]
-    [string]$Mode = 'smoke'
+    [string]$MetaPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -36,34 +33,17 @@ try {
 
     Push-Location $RepoRoot
     try {
-        if ($Mode -eq 'smoke') {
-            & python $Inspector `
-                --review-path $ReviewPath `
-                --meta-path $MetaPath `
-                --output-json 'reports/data_inspection/smoke_profile.json' `
-                --output-report 'reports/data_inspection/smoke_report.md' `
-                --sample-dir 'data/sample/amazon_fashion/smoke' `
-                --sample-size 20 `
-                --seed 42 `
-                --max-review-lines 5000 `
-                --max-meta-lines 5000 `
-                --progress-every 1000 `
-                --mode smoke
-        }
-        else {
-            & python $Inspector `
-                --review-path $ReviewPath `
-                --meta-path $MetaPath `
-                --output-json 'reports/data_inspection/amazon_fashion_sample_profile.json' `
-                --output-report 'docs/DATA_INSPECTION_REPORT.md' `
-                --sample-dir 'data/sample/amazon_fashion' `
-                --sample-size 100 `
-                --seed 42 `
-                --max-review-lines 100000 `
-                --max-meta-lines 50000 `
-                --progress-every 10000 `
-                --mode bounded
-        }
+        & python $Inspector `
+            --review-path $ReviewPath `
+            --meta-path $MetaPath `
+            --output-json 'reports/data_inspection/amazon_fashion_sample_profile.json' `
+            --output-report 'docs/DATA_INSPECTION_REPORT.md' `
+            --sample-dir 'data/sample/amazon_fashion' `
+            --sample-size 100 `
+            --seed 42 `
+            --max-review-lines 100000 `
+            --max-meta-lines 50000 `
+            --progress-every 10000
         if ($LASTEXITCODE -ne 0) {
             throw "Python inspection exited with code $LASTEXITCODE"
         }
@@ -71,11 +51,11 @@ try {
     finally {
         Pop-Location
     }
-    Write-Host "DATA INSPECTION RUNNER: PASS ($Mode)"
+    Write-Host "BOUNDED DATA INSPECTION RUNNER: PASS"
     exit 0
 }
 catch {
     Write-Error $_
-    Write-Host "DATA INSPECTION RUNNER: FAIL ($Mode)"
+    Write-Host "BOUNDED DATA INSPECTION RUNNER: FAIL"
     exit 1
 }

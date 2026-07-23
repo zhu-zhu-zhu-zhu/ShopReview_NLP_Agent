@@ -455,7 +455,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-review-lines", type=int, default=REVIEW_LIMIT)
     parser.add_argument("--max-meta-lines", type=int, default=META_LIMIT)
     parser.add_argument("--progress-every", type=int, default=10_000)
-    parser.add_argument("--mode", choices=("smoke", "bounded"), required=True)
     return parser
 
 
@@ -485,7 +484,7 @@ def run_inspection(args: argparse.Namespace) -> dict[str, Any]:
     schema = dictionary_rows("review", review_profile, REVIEW_EXPECTED) + dictionary_rows(
         "metadata", meta_profile, META_EXPECTED)
     profile = {
-        "inspection_version": VERSION, "generated_at_utc": utc_now(), "mode": args.mode,
+        "inspection_version": VERSION, "generated_at_utc": utc_now(), "mode": "bounded",
         "scope_label": SCOPE_LABEL, "completion_status": "successful",
         "limits": {"review_physical_lines": args.max_review_lines,
                    "metadata_physical_lines": args.max_meta_lines},

@@ -1,1 +1,1 @@
-"""Agent CLI / smoke scripts."""
+"""Production Agent command-line utilities."""

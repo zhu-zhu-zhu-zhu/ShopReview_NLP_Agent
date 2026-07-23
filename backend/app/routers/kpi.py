@@ -7,8 +7,6 @@ from fastapi.responses import JSONResponse
 
 from app.providers import get_provider
 from app.providers.base import ProviderError
-from app.providers.smoke_json import SmokeJsonProvider
-from app.providers.warehouse import WarehouseProvider
 
 router = APIRouter(tags=["kpi"])
 
@@ -18,9 +16,7 @@ def _wrap(data: Any, meta: dict[str, Any]) -> dict[str, Any]:
 
 
 def _provider_error_response(exc: ProviderError) -> JSONResponse:
-    status = (
-        501 if exc.error in {"not_available", "not_available_in_smoke"} else 500
-    )
+    status = 501 if exc.error == "not_available" else 500
     return JSONResponse(
         status_code=status,
         content={"ok": False, "error": exc.error, "message": exc.message},
@@ -44,15 +40,10 @@ def kpi(
     try:
         provider = get_provider()
         row = provider.get_kpi()
-        if isinstance(provider, SmokeJsonProvider):
-            meta = provider.dataset_meta("sentiment_overview.json")
-        elif isinstance(provider, WarehouseProvider):
-            meta = provider.response_meta(
-                "warehouse:dws_sentiment_overview",
-                data_scope=str(row.get("data_scope") or ""),
-            )
-        else:
-            meta = provider.response_meta("warehouse:kpi")
+        meta = provider.response_meta(
+            "warehouse:dws_sentiment_overview",
+            data_scope=str(row.get("data_scope") or ""),
+        )
         if start_date and end_date:
             meta = {
                 **meta,

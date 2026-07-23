@@ -8,7 +8,7 @@ type Props = {
 export function ProductTable({ rows }: Props) {
   return (
     <div className="table-wrap">
-      <p className="panel-note">smoke 下多数商品 review_count 可能为 1（小样本）</p>
+      <p className="panel-note">生产批次商品情感指标（按 parent_asin 聚合）</p>
       <table className="data-table">
         <thead>
           <tr>

@@ -1,4 +1,4 @@
-"""H0 self-check: HttpApiAdapter can read Stage G /api/kpi.
+"""Production self-check for the KPI and trend warehouse APIs.
 
 Run from repo root:
 
@@ -14,22 +14,13 @@ from agent.adapters.http_api import HttpApiAdapter
 from agent.config import get_settings
 
 
-GOLDEN = {
-    "review_count": 50,
-    "positive_count": 44,
-    "neutral_count": 6,
-    "negative_count": 0,
-    "positive_rate": 0.88,
-    "neutral_rate": 0.12,
-    "negative_rate": 0.0,
-    "average_rating": 4.46,
-}
+EXPECTED_REVIEW_COUNT = 99_703
 
 
 def main() -> int:
     settings = get_settings()
     print(f"BACKEND_BASE_URL={settings.backend_base_url}")
-    print(f"AGENT_DATA_MODE={settings.data_mode}")
+    print(f"DATA_MODE={settings.data_mode}")
 
     adapter = HttpApiAdapter(settings)
     result = adapter.get_kpi()
@@ -38,20 +29,12 @@ def main() -> int:
         return 1
 
     data = result.get("data") or {}
-    mismatches = []
-    for key, expected in GOLDEN.items():
-        actual = data.get(key)
-        if actual != expected:
-            # float tolerance for rates / rating
-            if isinstance(expected, float) and isinstance(actual, (int, float)):
-                if abs(float(actual) - expected) < 1e-9:
-                    continue
-            mismatches.append((key, expected, actual))
-
-    if mismatches:
-        print("PING_KPI_MISMATCH")
-        for key, expected, actual in mismatches:
-            print(f"  {key}: expected={expected!r} actual={actual!r}")
+    if data.get("review_count") != EXPECTED_REVIEW_COUNT:
+        print(
+            "PING_KPI_MISMATCH",
+            f"expected_review_count={EXPECTED_REVIEW_COUNT}",
+            f"actual_review_count={data.get('review_count')}",
+        )
         return 2
 
     print(
@@ -62,14 +45,13 @@ def main() -> int:
         f"source={result.get('source')}",
     )
 
-    # Extra smoke: placeholders should fail honestly
     trend = adapter.get_trend()
-    if trend.get("ok"):
-        print("PING_TREND_UNEXPECTED_OK")
+    if not trend.get("ok"):
+        print("PING_TREND_FAIL", trend.get("error"), trend.get("message"))
         return 3
     print(
         "PING_TREND_OK",
-        f"error={trend.get('error')}",
+        f"rows={len(trend.get('data') or [])}",
         f"source={trend.get('source')}",
     )
     return 0

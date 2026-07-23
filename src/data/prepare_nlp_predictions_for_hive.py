@@ -12,7 +12,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from src.data.prepare_ods_smoke_data import DELIMITER, NULL
+from src.data.hive_text import DELIMITER, NULL
 from src.data.validate_nlp_predictions_production_v1 import (
     DEFAULT_BATCH_ID,
     atomic_json,

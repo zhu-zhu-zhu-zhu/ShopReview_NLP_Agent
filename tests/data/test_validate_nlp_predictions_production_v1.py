@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from src.data.prepare_nlp_predictions_for_hive import convert_predictions, prediction_columns
-from src.data.prepare_ods_smoke_data import DELIMITER, NULL
+from src.data.hive_text import DELIMITER, NULL
 from src.data.validate_nlp_predictions_production_v1 import (
     SOURCE_TABLE,
     validate_prediction_file,

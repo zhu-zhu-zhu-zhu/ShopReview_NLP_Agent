@@ -21,6 +21,8 @@ const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(
   "",
 ) || "http://127.0.0.1:8080";
 
+const getCache = new Map<string, Promise<unknown>>();
+
 export class ApiError extends Error {
   status: number;
 
@@ -31,7 +33,7 @@ export class ApiError extends Error {
   }
 }
 
-async function getJson<T>(path: string): Promise<T> {
+async function requestJson<T>(path: string): Promise<T> {
   const url = `${API_BASE}${path}`;
   let response: Response;
   try {
@@ -62,7 +64,20 @@ async function getJson<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function getJsonOptional<T>(path: string): Promise<T | null> {
+async function getJson<T>(path: string): Promise<T> {
+  const cached = getCache.get(path);
+  if (cached) return (await cached) as T;
+  const request = requestJson<T>(path);
+  getCache.set(path, request);
+  try {
+    return await request;
+  } catch (error) {
+    getCache.delete(path);
+    throw error;
+  }
+}
+
+async function requestJsonOptional<T>(path: string): Promise<T | null> {
   const url = `${API_BASE}${path}`;
   let response: Response;
   try {
@@ -94,32 +109,65 @@ async function getJsonOptional<T>(path: string): Promise<T | null> {
   return (await response.json()) as T;
 }
 
+async function getJsonOptional<T>(path: string): Promise<T | null> {
+  const cached = getCache.get(path);
+  if (cached) return (await cached) as T | null;
+  const request = requestJsonOptional<T>(path);
+  getCache.set(path, request);
+  try {
+    return await request;
+  } catch (error) {
+    getCache.delete(path);
+    throw error;
+  }
+}
+
+export function clearApiCache(): void {
+  getCache.clear();
+}
+
 export function getApiBase(): string {
   return API_BASE;
 }
 
 export const fetchHealth = () => getJson<HealthPayload>("/api/health");
 export const fetchKpi = () => getJson<Wrapped<KpiRecord>>("/api/kpi");
-export const fetchProducts = () =>
+export const fetchProducts = (limit = 10, minReviews = 20) =>
   getJson<Wrapped<ProductRow[]>>(
-    "/api/top-negative-products?limit=10&min_reviews=20",
+    `/api/top-negative-products?limit=${limit}&min_reviews=${minReviews}`,
   );
-export const fetchAspects = () =>
-  getJsonOptional<Wrapped<AspectRow[]>>("/api/aspects");
-export const fetchReasons = () =>
-  getJsonOptional<Wrapped<ReasonRow[]>>("/api/negative-reasons?limit=20");
-export const fetchDailyTrend = () =>
-  getJsonOptional<Wrapped<TrendPoint[]>>("/api/trend?recent_days=365");
+export const fetchPositiveProducts = (limit = 10, minReviews = 5) =>
+  getJson<Wrapped<ProductRow[]>>(
+    `/api/top-positive-products?limit=${limit}&min_reviews=${minReviews}`,
+  );
+export const fetchAspects = (aspect?: string) =>
+  getJsonOptional<Wrapped<AspectRow[]>>(
+    `/api/aspects${aspect ? `?aspect=${encodeURIComponent(aspect)}` : ""}`,
+  );
+export const fetchReasons = (limit = 20) =>
+  getJsonOptional<Wrapped<ReasonRow[]>>(`/api/negative-reasons?limit=${limit}`);
+export const fetchDailyTrend = (recentDays = 365) =>
+  getJsonOptional<Wrapped<TrendPoint[]>>(`/api/trend?recent_days=${recentDays}`);
 export const fetchMonthlyTrend = () =>
   getJsonOptional<Wrapped<TrendPoint[]>>("/api/trends/monthly");
-export const fetchAlerts = () =>
-  getJsonOptional<Wrapped<AlertRow[]>>("/api/alerts?limit=12");
-export const fetchSamples = () =>
-  getJsonOptional<Wrapped<SampleRow[]>>("/api/samples?limit=9");
+export const fetchAlerts = (limit = 12, alertLevel = "") =>
+  getJsonOptional<Wrapped<AlertRow[]>>(
+    `/api/alerts?limit=${limit}&alert_level=${encodeURIComponent(alertLevel)}`,
+  );
+export const fetchSamples = (limit = 9, predLabel = "") =>
+  getJsonOptional<Wrapped<SampleRow[]>>(
+    `/api/samples?limit=${limit}&pred_label=${encodeURIComponent(predLabel)}`,
+  );
 export const fetchCategories = () =>
   getJsonOptional<Wrapped<CategoryRow[]>>("/api/categories");
-export const fetchStores = () =>
-  getJsonOptional<Wrapped<StoreRow[]>>("/api/stores?limit=10&min_reviews=20");
+export const fetchStores = (limit = 10, minReviews = 20) =>
+  getJsonOptional<Wrapped<StoreRow[]>>(
+    `/api/stores?limit=${limit}&min_reviews=${minReviews}`,
+  );
+export const fetchPositiveStores = (limit = 10, minReviews = 20) =>
+  getJson<Wrapped<StoreRow[]>>(
+    `/api/top-positive-stores?limit=${limit}&min_reviews=${minReviews}`,
+  );
 export const fetchVerified = () =>
   getJsonOptional<Wrapped<VerifiedRow[]>>("/api/verified-purchase");
 export const fetchRatingMatrix = () =>

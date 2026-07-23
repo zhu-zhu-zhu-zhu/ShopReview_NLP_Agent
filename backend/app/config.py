@@ -20,12 +20,8 @@ def _split_origins(raw: str) -> list[str]:
 
 class Settings:
     def __init__(self) -> None:
-        self.data_mode: str = os.getenv("DATA_MODE", "smoke").strip().lower()
-        smoke_dir = os.getenv("SMOKE_EXPORT_DIR", "exports/agent/smoke").strip()
-        smoke_path = Path(smoke_dir)
-        if not smoke_path.is_absolute():
-            smoke_path = REPO_ROOT / smoke_path
-        self.smoke_export_dir: Path = smoke_path
+        # Production build: MySQL warehouse is the only supported data source.
+        self.data_mode: str = "warehouse"
         self.api_host: str = os.getenv("API_HOST", "127.0.0.1").strip()
         self.api_port: int = int(os.getenv("API_PORT", "8080"))
         self.cors_origins: list[str] = _split_origins(

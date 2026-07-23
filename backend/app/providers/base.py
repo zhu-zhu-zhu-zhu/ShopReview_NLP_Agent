@@ -5,7 +5,7 @@ from typing import Any
 
 
 class MetricsProvider(ABC):
-    """Data access boundary for dashboard / Agent APIs."""
+    """Production warehouse access boundary for dashboard and Agent APIs."""
 
     @abstractmethod
     def get_health_meta(self) -> dict[str, Any]:
@@ -20,6 +20,13 @@ class MetricsProvider(ABC):
         self, limit: int, min_reviews: int
     ) -> list[dict[str, Any]]:
         raise NotImplementedError
+
+    def get_top_positive_products(
+        self, limit: int, min_reviews: int
+    ) -> list[dict[str, Any]]:
+        raise NotImplementedError(
+            "positive product ranking not available for this provider"
+        )
 
     @abstractmethod
     def get_aspects(self, aspect: str | None) -> list[dict[str, Any]]:
@@ -52,6 +59,13 @@ class MetricsProvider(ABC):
     ) -> list[dict[str, Any]]:
         raise NotImplementedError("stores not available for this provider")
 
+    def get_top_positive_stores(
+        self, limit: int = 10, min_reviews: int = 20
+    ) -> list[dict[str, Any]]:
+        raise NotImplementedError(
+            "positive store ranking not available for this provider"
+        )
+
     def get_verified_purchase(self) -> list[dict[str, Any]]:
         raise NotImplementedError("verified purchase not available for this provider")
 
@@ -79,10 +93,10 @@ class MetricsProvider(ABC):
 
     def response_meta(self, source: str, *, data_scope: str = "") -> dict[str, Any]:
         return {
-            "data_mode": "unknown",
+            "data_mode": "warehouse",
             "schema_version": "draft_v0.1",
             "data_scope": data_scope,
-            "production_business_metrics": False,
+            "production_business_metrics": True,
             "source": source,
         }
 

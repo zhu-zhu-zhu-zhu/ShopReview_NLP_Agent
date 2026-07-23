@@ -9,7 +9,7 @@ from agent.tools.base import as_tool_dict, get_adapter
 DESCRIPTION = (
     "获取当前导出范围内评论情感总览 KPI："
     "评论量、正/中/负数量与比率、均分。"
-    "无真实日趋势；smoke 下可选日期参数会被忽略。"
+    "返回当前生产批次总览；可选日期参数不改变批次级快照。"
 )
 
 OPENAI_SCHEMA: dict[str, Any] = {
@@ -22,11 +22,11 @@ OPENAI_SCHEMA: dict[str, Any] = {
             "properties": {
                 "start_date": {
                     "type": "string",
-                    "description": "可选 YYYY-MM-DD；smoke 下可能被忽略",
+                    "description": "可选 YYYY-MM-DD；批次级快照不按日期切分",
                 },
                 "end_date": {
                     "type": "string",
-                    "description": "可选 YYYY-MM-DD；smoke 下可能被忽略",
+                    "description": "可选 YYYY-MM-DD；批次级快照不按日期切分",
                 },
             },
             "additionalProperties": False,

@@ -127,12 +127,6 @@ input {
   background: var(--surface-strong);
 }
 
-.badge--smoke {
-  color: #115e59;
-  border-color: rgba(15, 118, 110, 0.25);
-  background: rgba(20, 184, 166, 0.12);
-}
-
 .badge--warn {
   color: var(--amber);
   border-color: rgba(180, 83, 9, 0.25);
@@ -620,7 +614,7 @@ input {
   }
 }
 
-/* —— Stage H Agent drawer —— */
+/* —— Agent drawer —— */
 .agent-overlay {
   position: fixed;
   inset: 0;

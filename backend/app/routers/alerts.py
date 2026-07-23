@@ -8,7 +8,6 @@ from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.providers import get_provider
 from app.providers.base import ProviderError
-from app.providers.warehouse import WarehouseProvider
 
 router = APIRouter(tags=["alerts"])
 
@@ -28,17 +27,10 @@ def alerts(
             limit=_clamp(limit, 1, 200),
             alert_level=alert_level,
         )
-        if isinstance(provider, WarehouseProvider):
-            meta = provider.response_meta("warehouse:dws_sentiment_alerts")
-        else:
-            meta = provider.response_meta("smoke:alerts")
+        meta = provider.response_meta("warehouse:dws_sentiment_alerts")
         return {"ok": True, "data": rows, "meta": meta}
     except ProviderError as exc:
-        status = (
-            501
-            if exc.error in {"not_available", "not_available_in_smoke"}
-            else 500
-        )
+        status = 501 if exc.error == "not_available" else 500
         return JSONResponse(
             status_code=status,
             content={
@@ -48,8 +40,7 @@ def alerts(
                 "meta": {
                     "data_mode": get_settings().data_mode,
                     "schema_version": "draft_v0.1",
-                    "production_business_metrics": get_settings().data_mode
-                    == "warehouse",
+                    "production_business_metrics": True,
                 },
             },
         )

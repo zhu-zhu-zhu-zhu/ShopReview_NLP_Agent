@@ -14,7 +14,7 @@ if not exist "backend\.env" (
   exit /b 1
 )
 
-REM Prefer values from backend\.env (python-dotenv). Do not force smoke here.
+REM Prefer connection values from ignored backend\.env.
 set DATA_MODE=warehouse
 
 echo ========================================

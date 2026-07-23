@@ -8,7 +8,6 @@ from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.providers import get_provider
 from app.providers.base import ProviderError
-from app.providers.warehouse import WarehouseProvider
 
 router = APIRouter(tags=["trend"])
 
@@ -18,9 +17,7 @@ def _clamp(value: int, low: int, high: int) -> int:
 
 
 def _err(exc: ProviderError) -> JSONResponse:
-    status = (
-        501 if exc.error in {"not_available", "not_available_in_smoke"} else 500
-    )
+    status = 501 if exc.error == "not_available" else 500
     return JSONResponse(
         status_code=status,
         content={
@@ -30,8 +27,7 @@ def _err(exc: ProviderError) -> JSONResponse:
             "meta": {
                 "data_mode": get_settings().data_mode,
                 "schema_version": "serving_v2",
-                "production_business_metrics": get_settings().data_mode
-                == "warehouse",
+                "production_business_metrics": True,
             },
         },
     )
@@ -63,10 +59,7 @@ def trend(
             limit=capped,
             recent_days=recent,
         )
-        if isinstance(provider, WarehouseProvider):
-            meta = provider.response_meta("warehouse:dws_sentiment_daily")
-        else:
-            meta = provider.response_meta("smoke:trend")
+        meta = provider.response_meta("warehouse:dws_sentiment_daily")
         return {"ok": True, "data": rows, "meta": meta}
     except ProviderError as exc:
         return _err(exc)
@@ -82,10 +75,7 @@ def monthly_trend() -> Any:
     try:
         provider = get_provider()
         rows = provider.get_monthly_trend()
-        if isinstance(provider, WarehouseProvider):
-            meta = provider.response_meta("warehouse:dws_monthly_sentiment")
-        else:
-            meta = provider.response_meta("smoke:monthly")
+        meta = provider.response_meta("warehouse:dws_monthly_sentiment")
         return {"ok": True, "data": rows, "meta": meta}
     except ProviderError as exc:
         return _err(exc)

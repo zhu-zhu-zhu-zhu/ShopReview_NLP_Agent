@@ -5,6 +5,10 @@ export type ResponseMeta = {
   production_business_metrics: boolean;
   source: string;
   message?: string;
+  load_batch_id?: string;
+  model_version?: string;
+  extraction_method?: string;
+  generated_at?: string;
 };
 
 export type HealthPayload = {
@@ -43,6 +47,7 @@ export type ProductRow = {
   parent_asin: string;
   product_title: string;
   store_name?: string | null;
+  main_category?: string | null;
   review_count: number;
   average_rating: number;
   positive_count: number;
@@ -51,6 +56,10 @@ export type ProductRow = {
   positive_rate: number;
   neutral_rate: number;
   negative_rate: number;
+  average_prediction_score?: number;
+  generated_at?: string;
+  load_batch_id?: string;
+  model_version?: string;
   data_scope: string;
 };
 
@@ -62,9 +71,17 @@ export type AspectRow = {
   negative_count: number;
   neutral_count: number;
   positive_count: number;
+  product_count?: number;
+  positive_rate?: number;
+  neutral_rate?: number;
   negative_rate: number;
   average_confidence: number;
   extractor_version: string;
+  extraction_method?: string;
+  rule_version?: string;
+  generated_at?: string;
+  load_batch_id?: string;
+  model_version?: string;
   data_scope: string;
 };
 
@@ -77,6 +94,11 @@ export type ReasonRow = {
   reason_count: number;
   reason_share: number;
   extractor_version: string;
+  extraction_method?: string;
+  rule_version?: string;
+  generated_at?: string;
+  load_batch_id?: string;
+  model_version?: string;
   data_scope: string;
 };
 
@@ -102,6 +124,9 @@ export type AlertRow = {
   threshold_value: number;
   review_count: number;
   alert_message: string;
+  generated_at?: string;
+  load_batch_id?: string;
+  model_version?: string;
 };
 
 export type SampleRow = {
@@ -112,6 +137,9 @@ export type SampleRow = {
   pred_label: string;
   pred_score: number;
   review_text_preview?: string | null;
+  generated_at?: string;
+  load_batch_id?: string;
+  model_version?: string;
 };
 
 export type CategoryRow = {
@@ -129,9 +157,12 @@ export type StoreRow = {
   store_name: string;
   review_count: number;
   product_count: number;
-  negative_rate: number;
+  positive_count: number;
   positive_rate: number;
+  neutral_rate: number;
+  negative_rate: number;
   average_rating?: number;
+  average_prediction_score?: number;
 };
 
 export type VerifiedRow = {
@@ -158,6 +189,9 @@ export type ConfidenceRow = {
   positive_count: number;
   neutral_count: number;
   negative_count: number;
+  generated_at?: string;
+  load_batch_id?: string;
+  model_version?: string;
 };
 
 export type Wrapped<T> = {

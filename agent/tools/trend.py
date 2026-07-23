@@ -1,16 +1,14 @@
-"""Tool: get_sentiment_trend → GET /api/trend (Stage G placeholder, Scheme A)."""
+"""Tool: get_sentiment_trend → GET /api/trend."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from agent.adapters.http_api import HttpApiAdapter
-from agent.tools.base import as_tool_dict
+from agent.tools.base import as_tool_dict, clamp_int, get_adapter
 
 DESCRIPTION = (
-    "查询评论情感日趋势/时间序列。"
-    "当前 smoke 导出无日趋势数据；调用后通常得到 not_available_in_smoke。"
-    "禁止编造趋势上升或下降。"
+    "查询生产 warehouse 的近 N 日评论情感趋势。"
+    "返回日期、评论量、正中负比例和平均评分；禁止编造趋势。"
 )
 
 OPENAI_SCHEMA: dict[str, Any] = {
@@ -20,7 +18,12 @@ OPENAI_SCHEMA: dict[str, Any] = {
         "description": DESCRIPTION,
         "parameters": {
             "type": "object",
-            "properties": {},
+            "properties": {
+                "recent_days": {
+                    "type": "integer",
+                    "description": "最近天数，默认 365，范围 1～1000",
+                },
+            },
             "additionalProperties": False,
         },
     },
@@ -28,6 +31,9 @@ OPENAI_SCHEMA: dict[str, Any] = {
 
 
 def run(arguments: dict[str, Any] | None = None) -> dict[str, Any]:
-    _ = arguments
-    # Scheme A: always hit Stage G placeholder HTTP (same as dashboard capability strip).
-    return as_tool_dict(HttpApiAdapter().get_trend())
+    args = arguments or {}
+    return as_tool_dict(
+        get_adapter().get_trend(
+            recent_days=clamp_int(args.get("recent_days"), 1, 1000, 365),
+        )
+    )

@@ -11,7 +11,7 @@ export default function App() {
         <strong>后端不可用</strong>
         <p>{board.error}</p>
         <p className="mono">API {getApiBase()}</p>
-        <button type="button" onClick={() => void board.reload()}>
+        <button type="button" onClick={() => void board.reload(true)}>
           重试
         </button>
       </div>
@@ -29,7 +29,7 @@ export default function App() {
   return (
     <CommandWall
       data={board.data}
-      onRefresh={() => void board.reload()}
+      onRefresh={() => void board.reload(true)}
       loading={board.loading}
     />
   );

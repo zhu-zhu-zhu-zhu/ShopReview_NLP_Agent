@@ -1,4 +1,4 @@
-/** Demo script chips for Stage H intelligent Q&A (答辩固定问法). */
+/** Production investigation prompts shown as quick-action chips. */
 export const DEMO_SCRIPTS = [
   {
     id: "1",

@@ -7,8 +7,6 @@ from fastapi.responses import JSONResponse
 
 from app.providers import get_provider
 from app.providers.base import ProviderError
-from app.providers.smoke_json import SmokeJsonProvider
-from app.providers.warehouse import WarehouseProvider
 
 router = APIRouter(tags=["products"])
 
@@ -18,9 +16,7 @@ def _clamp(value: int, low: int, high: int) -> int:
 
 
 def _provider_error_response(exc: ProviderError) -> JSONResponse:
-    status = (
-        501 if exc.error in {"not_available", "not_available_in_smoke"} else 500
-    )
+    status = 501 if exc.error == "not_available" else 500
     return JSONResponse(
         status_code=status,
         content={"ok": False, "error": exc.error, "message": exc.message},
@@ -47,12 +43,7 @@ def top_negative_products(
         rows = provider.get_top_negative_products(
             limit=limit, min_reviews=min_reviews
         )
-        if isinstance(provider, SmokeJsonProvider):
-            meta = provider.dataset_meta("product_sentiment.json")
-        elif isinstance(provider, WarehouseProvider):
-            meta = provider.response_meta("warehouse:dws_product_sentiment")
-        else:
-            meta = provider.response_meta("warehouse:top-negative-products")
+        meta = provider.response_meta("warehouse:dws_product_sentiment")
         return {"ok": True, "data": rows, "meta": meta}
     except ProviderError as exc:
         return _provider_error_response(exc)
@@ -62,6 +53,43 @@ def top_negative_products(
             detail={
                 "ok": False,
                 "error": "not_implemented",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.get("/api/top-positive-products", response_model=None)
+def top_positive_products(
+    limit: int = Query(default=10),
+    min_reviews: int = Query(default=5),
+) -> Any:
+    limit = _clamp(limit, 1, 50)
+    if min_reviews < 0:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "ok": False,
+                "error": "invalid_args",
+                "message": "min_reviews must be >= 0",
+            },
+        )
+    try:
+        provider = get_provider()
+        rows = provider.get_top_positive_products(
+            limit=limit, min_reviews=min_reviews
+        )
+        meta = provider.response_meta(
+            "warehouse:dws_product_sentiment"
+        )
+        return {"ok": True, "data": rows, "meta": meta}
+    except ProviderError as exc:
+        return _provider_error_response(exc)
+    except NotImplementedError as exc:
+        raise HTTPException(
+            status_code=501,
+            detail={
+                "ok": False,
+                "error": "not_available",
                 "message": str(exc),
             },
         ) from exc

@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.data.prepare_ods_smoke_data import DELIMITER, NULL
+from src.data.hive_text import DELIMITER, NULL
 from src.data.prepare_production_ods_dwd_v1 import (
     META_OUTPUT, MISSING_OUTPUT, REVIEW_OUTPUT, SUMMARY_OUTPUT, prepare,
 )

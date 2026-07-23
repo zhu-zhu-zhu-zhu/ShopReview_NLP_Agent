@@ -1,73 +1,160 @@
 # ShopReview_NLP_Agent
 
-电商用户评论情感分析 + 洞察 Agent 平台（生产实习结项选题）
+基于 Amazon Fashion 公开评论数据的端到端情感分析平台。项目覆盖流式数据检查、HDFS/Hive ODS-DWD-DWS 数仓、TF-IDF + Logistic Regression 三分类、5 折 OOF 正式预测、MySQL serving、FastAPI、React/ECharts 情感作战室，以及基于 DeepSeek 的只读分析 Agent。
 
-## 说明书（先读）
+## 1. 最终生产基线
 
-请先阅读并按阶段执行：
+| 项目 | 当前值 |
+|---|---|
+| 数据范围 | Amazon Fashion production-v1 实验子集 |
+| 批次 | `prod_v1_100k` |
+| ODS 评论 | 100,000 |
+| DWD 有效评论 | 99,703 |
+| 商品数 | 76,784 |
+| NLP 输入唯一键 | 99,703 |
+| 正式预测方式 | 5-fold Stratified Out-of-Fold |
+| 正式模型版本 | `tfidf_logreg_oof_v1` |
+| OOF 覆盖率 | 100% |
+| serving 版本 | `prod_v2` / schema `serving_v2` |
+| MySQL 数据库 | `shopreview_serving` |
+| 规则抽取 | `keyword_rules_v1` |
+| API | `http://127.0.0.1:8080` |
+| 大屏 | `http://127.0.0.1:5173` |
 
-**[电商评论情感分析Agent平台-完整实施框架说明书.md](./电商评论情感分析Agent平台-完整实施框架说明书.md)**
+当前 OOF 预测分布为 positive 64,861、neutral 18,943、negative 15,899；平均预测置信度为 0.753397。以上模型预测不等同于人工标注真值。
 
-阶段 G（服务层 + 可视化大屏）展开说明：
+## 2. 系统架构
 
-**[docs/阶段G_服务层与大屏开发说明书.md](./docs/阶段G_服务层与大屏开发说明书.md)**
+```text
+Amazon Fashion JSONL
+        │  标准库逐行解析、限定范围
+        ▼
+HDFS → Hive ODS → Hive DWD
+                    │
+                    ├─ 99,703 条清洗评论 → NLP 输入
+                    │                     ├─ 留出测试评估
+                    │                     ├─ 5 折 OOF 正式预测
+                    │                     └─ 全量模型仅供新评论推理
+                    │
+                    ▼
+             Hive 情感 DWD / DWS
+                    │
+                    ▼
+          MySQL shopreview_serving
+                    │  agent_reader 只读查询
+                    ▼
+              FastAPI :8080
+               ├─ React/ECharts 大屏 :5173
+               └─ DeepSeek Agent 白名单工具
+```
 
-阶段 G 冒烟执行步骤（按勾选完成）：
+仓库已裁剪为生产运行版本，不包含本地 JSON 数据回退、阶段运行器、合成阶段表或相应测试夹具。生产 API 只查询配置批次与模型版本。
 
-**[docs/阶段G_冒烟测试执行步骤.md](./docs/阶段G_冒烟测试执行步骤.md)**
+## 3. 快速启动
 
-阶段 G 冒烟一键运行（端口 / 启动顺序 / 错误态）：
+### 3.1 前置条件
 
-**[docs/阶段G_冒烟运行手册.md](./docs/阶段G_冒烟运行手册.md)**
+- Windows PowerShell；
+- Docker 中已有 `shopreview_mysql`，数据库为 `shopreview_serving`；
+- 项目根目录已有 `.venv`；
+- `dashboard/node_modules` 已安装；
+- `backend/.env` 中保存现有 `agent_reader` 只读凭据；
+- 如使用 AI 调查，`agent/.env` 中保存有效 DeepSeek Key。
 
-API 字段契约（大屏 / Agent 共用）：
+所有本地 `.env` 均被 Git 忽略，不得把密码或 Key 写入代码、文档或提交历史。
 
-**[docs/api_contract_v0.md](./docs/api_contract_v0.md)**
+### 3.2 启动后端
 
-阶段 H（Agent）展开说明：
+```powershell
+cd D:\bdt-app-course\projects\ShopReview_NLP_Agent
+.\backend\start_warehouse.bat
+```
 
-**[docs/阶段H_Agent开发说明书.md](./docs/阶段H_Agent开发说明书.md)**
+启动前的只读数据库检查：
 
-阶段 H 按勾选执行步骤（H0～H8，**大模型智能问答为主**）：
+```powershell
+.\.venv\Scripts\python.exe backend\scripts\check_mysql_serving.py
+```
 
-**[docs/阶段H_Agent开发执行步骤.md](./docs/阶段H_Agent开发执行步骤.md)**
+### 3.3 启动前端
 
-推荐产品层顺序：**F 安全导出 → G 大屏+API → H Agent**。
+另开 PowerShell：
 
-大屏冒烟（Vite + React）：先 `backend\start.bat`，再 `dashboard\start.bat`；或根目录 `start_smoke_demo.bat`。
+```powershell
+cd D:\bdt-app-course\projects\ShopReview_NLP_Agent\dashboard
+.\node_modules\.bin\vite.cmd --host 127.0.0.1
+```
 
-## 选题对应
+访问：
 
-| 项 | 内容 |
-|----|------|
-| 方向 | 大数据 · 用户行为分析 |
-| 编号 | 3 |
-| 名称 | 基于公开数据集的电商用户评论情感分析 |
-| 技术栈 | HDFS, Hive, Python, NLP, 情感分类 + LLM Agent |
+- Swagger：`http://127.0.0.1:8080/docs`
+- 情感作战室：`http://127.0.0.1:5173`
 
-## 状态
+## 4. 生产指标
 
-### 已完成
+| 指标 | 当前值 |
+|---|---:|
+| 评论量 | 99,703 |
+| 商品数 | 76,784 |
+| 正面预测 | 64,861（65.05%） |
+| 中性预测 | 18,943（19.00%） |
+| 负面预测 | 15,899（15.95%） |
+| 平均评分 | 4.0563 |
+| 平均预测置信度 | 0.753397 |
 
-- 实施框架与 Amazon Fashion 决策对齐；
-- Phase B 有界数据检查；
-- Phase C 100 行 HDFS/Hive ODS smoke test；
-- Phase D 协调匹配样本 JOIN 与 DWD smoke test；
-- Phase E NLP 数据交接与预测写回契约 smoke test（合成接口记录，不是模型输出）；
-- Phase F DWS 聚合与 Agent 安全 JSON 导出 smoke test（方面记录为合成契约数据）；
-- production-v1 生产实验范围 HDFS 落盘（批次 `prod_v1_100k`）；
-- production-v1 分区 ODS；
-- production-v1 分区 Parquet DWD；
-- production-v1 正式 NLP 输入导出与交付验证；
-- 真实预测回写与 production DWS 管道代码准备（尚未执行导入）；
-- 阶段 G 冒烟：FastAPI（`backend/`）+ 可视化大屏（`dashboard/`），读 `exports/agent/smoke`（正式总验收可后置）。
+serving v2 包含总览、日/月趋势、商品、品类、店铺、认证购买、星级矩阵、置信度、告警、脱敏样例、方面和负面原因共 13 张表。
 
-### 尚未完成
+## 5. 目录说明
 
-- 实际 NLP 模型训练；
-- 真实模型预测文件交付；
-- production 预测导入；
-- 真实方面提取；
-- production DWS 执行；
-- 阶段 G 正式总验收（原步骤 7，建议结项前与总验一并做）；
-- Agent 开发与最终集成（阶段 H，按 `docs/阶段H_Agent开发执行步骤.md`）。
+```text
+agent/      DeepSeek 编排、系统提示词和 16 个白名单工具
+backend/    FastAPI、参数化 MySQL 查询与只读 provider
+dashboard/  React + TypeScript + ECharts 情感作战室
+data/       本地处理数据；生成物均被 Git 忽略
+docs/       数据字典、契约、训练报告和生产验收文档
+reports/    可提交的安全摘要与 manifest
+scripts/    有界检查及 production-v1 数仓/NLP运行器
+sql/        production ODS、DWD、DWS 与校验 SQL
+src/data/   流式转换、导出和预测契约校验
+tests/      仅使用临时合成记录的生产处理单元测试
+```
+
+## 6. 安全与数据边界
+
+- 商品主键使用 `parent_asin`；店铺使用 `store_key`。
+- API 固定过滤 `prod_v1_100k` 与 `tfidf_logreg_oof_v1`。
+- MySQL 查询使用参数化 SQL；表名只允许来自代码内固定白名单。
+- 后端拒绝使用 MySQL `root`，应用账号必须为只读 `agent_reader`。
+- 前端不直连 Hive/MySQL，不包含 mock 业务数据。
+- Agent 不执行 SQL、不修改仓库、不读取原始 JSONL。
+- 评论样例只返回 `review_text_preview`，不返回 `user_id` 或完整文本。
+- 方面和负面原因来自关键词规则，不得描述为 LLM 抽取。
+
+## 7. 验证
+
+```powershell
+# Python 单元测试
+.\.venv\Scripts\python.exe -m unittest discover -s tests\data -v
+
+# Agent/warehouse 连通
+$env:PYTHONPATH=(Get-Location).Path
+.\.venv\Scripts\python.exe -m agent.scripts.ping_kpi
+
+# 前端生产构建
+cd dashboard
+npm.cmd run build
+```
+
+当前裁剪版本验证：Python 38/38 PASS，前端 build PASS，API `/docs`、`/api/kpi`、好评店铺榜和好评商品榜均返回 HTTP 200。
+
+## 8. 文档索引
+
+- [最终生产验收报告](docs/PRODUCTION_SYSTEM_ACCEPTANCE_REPORT.md)
+- [API 参考](docs/API_REFERENCE.md)
+- [数据字典](docs/DATA_DICTIONARY.md)
+- [有界数据检查报告](docs/DATA_INSPECTION_REPORT.md)
+- [ODS/DWD 验收报告](docs/PRODUCTION_ODS_DWD_V1_REPORT.md)
+- [NLP 输入交付与预测写回报告](docs/NLP_PRODUCTION_V1_HANDOFF_REPORT.md)
+- [NLP 基线训练报告](docs/NLP_BASELINE_TRAINING_REPORT.md)
+- [NLP 数仓契约](docs/NLP_WAREHOUSE_CONTRACT.md)
+- [规则方面分析契约](docs/ASPECT_WAREHOUSE_CONTRACT.md)

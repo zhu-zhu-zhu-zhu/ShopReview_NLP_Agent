@@ -184,6 +184,38 @@ class WarehouseProvider(MetricsProvider):
             row["data_scope"] = self._scope
         return rows
 
+    def get_top_positive_products(
+        self, limit: int = 10, min_reviews: int = 5
+    ) -> list[dict[str, Any]]:
+        params: dict[str, Any] = {
+            **self._partition_params(),
+            "min_reviews": int(min_reviews),
+            "limit": int(limit),
+        }
+        return self.client.fetch_all(
+            """
+            SELECT
+              parent_asin,
+              product_title,
+              store_name,
+              main_category,
+              review_count,
+              average_rating,
+              positive_count,
+              positive_rate,
+              neutral_rate,
+              negative_rate,
+              average_prediction_score
+            FROM dws_product_sentiment
+            WHERE load_batch_id = %(load_batch_id)s
+              AND model_version = %(model_version)s
+              AND review_count >= %(min_reviews)s
+            ORDER BY positive_rate DESC, positive_count DESC, review_count DESC
+            LIMIT %(limit)s
+            """,
+            params,
+        )
+
     def get_trend(
         self,
         *,
@@ -340,6 +372,37 @@ class WarehouseProvider(MetricsProvider):
             row["data_scope"] = self._scope
         return rows
 
+    def get_top_positive_stores(
+        self, limit: int = 10, min_reviews: int = 20
+    ) -> list[dict[str, Any]]:
+        params: dict[str, Any] = {
+            **self._partition_params(),
+            "limit": int(limit),
+            "min_reviews": int(min_reviews),
+        }
+        return self.client.fetch_all(
+            """
+            SELECT
+              store_key,
+              store_name,
+              review_count,
+              product_count,
+              average_rating,
+              positive_count,
+              positive_rate,
+              neutral_rate,
+              negative_rate,
+              average_prediction_score
+            FROM dws_store_sentiment
+            WHERE load_batch_id = %(load_batch_id)s
+              AND model_version = %(model_version)s
+              AND review_count >= %(min_reviews)s
+            ORDER BY positive_rate DESC, positive_count DESC, review_count DESC
+            LIMIT %(limit)s
+            """,
+            params,
+        )
+
     def get_verified_purchase(self) -> list[dict[str, Any]]:
         rows = self.client.fetch_all(
             """
@@ -459,7 +522,7 @@ class WarehouseProvider(MetricsProvider):
         for row in rows:
             mapped.append(
                 {
-                    # Contract-compatible aliases for smoke dashboard
+                    # Dashboard-compatible aliases for aspect aggregates
                     "aspect": row.get("aspect_code"),
                     "reason_code": row.get("aspect_code"),
                     "reason_name": row.get("aspect_name"),

@@ -1,69 +1,53 @@
-# ShopReview 评论情感洞察大屏（阶段 G 冒烟）
+# ShopReview 情感作战室
 
-Vite + React + ECharts。所有指标只经 FastAPI，**禁止**直接 import `exports/agent/smoke` JSON。
+基于 React、TypeScript、Vite 和 ECharts 的 production serving v2 数据大屏。前端只访问 FastAPI，不包含 mock 业务数据，也不直接读取 Hive、MySQL、JSONL 或本地导出。
 
-完整复现：`docs/阶段G_冒烟运行手册.md`。
+## 启动
 
-## 启动顺序（必须）
+```powershell
+# 窗口 1：仓库根目录
+.\backend\start_warehouse.bat
 
-1. 先启动后端：`..\backend\start.bat` → http://127.0.0.1:8080  
-2. 再启动本大屏：`start.bat` → http://127.0.0.1:5173  
-3. 浏览器打开大屏；F12 → Network 确认请求打到 **8080**
-
-Windows 请用 `npm.cmd`（避免 PowerShell 执行策略拦 `npm.ps1`）。
-
-## 首次安装
-
-```bat
-cd /d F:\Production_Internship\ShopReview_NLP_Agent\dashboard
-copy .env.example .env
-npm.cmd install
-start.bat
+# 窗口 2
+cd dashboard
+.\node_modules\.bin\vite.cmd --host 127.0.0.1
 ```
 
-## 配置
+打开 `http://127.0.0.1:5173`。默认 API 地址由 `VITE_API_BASE=http://127.0.0.1:8080` 控制。
 
-`dashboard/.env`：
+## 页面区域
 
-```env
-VITE_API_BASE=http://127.0.0.1:8080
+- 生产状态栏：后端、批次、模型和 warehouse 模式；
+- KPI：健康指数、评论量、正/中/负比例、平均评分、告警；
+- 情感时间河：月度全景与近 365 日趋势；
+- 风险热力榜：店铺/商品差评榜与好评榜切换；
+- 告警雷达：按 CRITICAL、HIGH、MEDIUM、LOW 展示；
+- 星级 × 预测矩阵与预测置信度；
+- 规则方面与全局负面原因；
+- 认证购买对比和脱敏评论样例；
+- ReviewOps Copilot AI 风险调查抽屉。
+
+## 动效和无障碍
+
+- 页面分区按顺序淡入，不改变布局尺寸；
+- KPI 仅在值变化时滚动；
+- ECharts 使用平滑首次绘制与切换动画；
+- 排行榜使用与情感方向一致的颜色：好评青绿色、差评洋红色；
+- Agent 启动器可拖动，抽屉打开时启动器隐藏；
+- 支持 `prefers-reduced-motion: reduce`，关闭数字滚动、扫描、呼吸和流光，仅保留简单淡入。
+
+## 生产构建
+
+```powershell
+cd D:\bdt-app-course\projects\ShopReview_NLP_Agent\dashboard
+npm.cmd run build
 ```
 
-## 当前大屏
+构建输出 `dashboard/dist/`，属于本地生成物，不应提交。当前 build PASS；Vite 仅提示主包超过 500 kB，不影响构建结果。
 
-唯一入口：**情感作战室（Command Wall）** — 深色监控投屏布局。
+## 故障判断
 
-打开 http://127.0.0.1:5173（需先启 warehouse API）。
-
-## 面板与接口
-
-| 区域 | API |
-|------|-----|
-| 顶栏 / 底栏 | `/api/health` |
-| KPI / 占比 | `/api/kpi` |
-| 方面 | `/api/aspects` |
-| Top 商品 | `/api/top-negative-products` |
-| 差评原因 | `/api/negative-reasons` |
-| 能力条 | `/api/trend` `/api/alerts` `/api/samples` → 期望 501「暂未接入」 |
-| **智能问答抽屉** | `POST /api/agent/chat`（DeepSeek + 白名单工具） |
-
-## 智能问答（阶段 H）
-
-1. 顶栏点 **智能问答** 打开侧抽屉  
-2. 可用剧本芯片一键提问，或自行输入后 Enter 发送  
-3. 展示 `steps`（tool 芯片）与 `answer`；可展开原始 JSON  
-
-需后端已挂载 `/api/agent/chat` 且配置了 `agent/.env` 中的 `LLM_API_KEY`。
-
-## 错误态（步骤 6）
-
-| 场景 | 期望 |
-|------|------|
-| 关掉后端后点「刷新」 | 红色「后端不可用」提示，不展示假 KPI |
-| 后端开着，trend/alerts/samples | 能力条显示「暂未接入」，不画假趋势 |
-
-## 冒烟说明
-
-顶栏 **Smoke / 非生产业务指标**。数字来自契约导出，不能当作全站运营结论。
-
-正式版：后端切 `DATA_MODE=warehouse` 后，本大屏通常无需改接口路径。
+- 页面提示后端不可用：检查 `http://127.0.0.1:8080/docs`；
+- API 正常但无数据：检查 `/api/health` 的批次、模型和表行数；
+- PowerShell 阻止 `npm.ps1`：使用 `npm.cmd` 或 `vite.cmd`；
+- Agent 无法回答：先确认普通 warehouse API 正常，再检查本地 `agent/.env` Key。

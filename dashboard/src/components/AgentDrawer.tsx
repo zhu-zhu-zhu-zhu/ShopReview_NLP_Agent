@@ -1,208 +1,250 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ApiError, fetchAgentChat, getApiBase } from "../api";
-import type { AgentChatResponse, AgentStep } from "../agentTypes";
-import { DEMO_SCRIPTS } from "../demoScripts";
+import type {
+  DashboardTarget,
+  InvestigationKind,
+  InvestigationResult,
+} from "../agentTypes";
+import type { HealthPayload } from "../types";
+import {
+  inferInvestigationKind,
+  runInvestigation,
+} from "../investigation";
+import { InvestigationTimeline } from "./InvestigationTimeline";
+import { QuickActions } from "./QuickActions";
+import "./agent.css";
 
 type Props = {
   open: boolean;
+  health: HealthPayload;
   onClose: () => void;
-  dataModeHint?: string;
+  onFocus: (target: DashboardTarget) => void;
 };
 
-function lightFormat(text: string): string {
-  // Escape then apply a few markdown-ish replacements for readability.
-  const escaped = text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  return escaped
-    .replace(/^### (.+)$/gm, "<strong>$1</strong>")
-    .replace(/^## (.+)$/gm, "<strong>$1</strong>")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/`([^`]+)`/g, "<code>$1</code>")
-    .replace(/\n/g, "<br />");
-}
+type LastRun =
+  | { mode: "quick"; kind: InvestigationKind }
+  | { mode: "chat"; question: string };
 
-export function AgentDrawer({ open, onClose, dataModeHint }: Props) {
+export function AgentDrawer({ open, health, onClose, onFocus }: Props) {
   const titleId = useId();
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [question, setQuestion] = useState<string>(DEMO_SCRIPTS[0].question);
+  const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<AgentChatResponse | null>(null);
+  const [result, setResult] = useState<InvestigationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [rawOpen, setRawOpen] = useState(false);
+  const [agentUnavailable, setAgentUnavailable] = useState(false);
+  const [lastRun, setLastRun] = useState<LastRun | null>(null);
+
+  const warehouseReady =
+    health.ok &&
+    health.data_mode === "warehouse" &&
+    health.production_business_metrics;
 
   useEffect(() => {
     if (!open) return;
-    const t = window.setTimeout(() => inputRef.current?.focus(), 50);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 80);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      window.clearTimeout(t);
+      window.clearTimeout(focusTimer);
       window.removeEventListener("keydown", onKey);
     };
   }, [open, onClose]);
 
-  async function send(q?: string) {
-    const text = (q ?? question).trim();
-    if (!text || loading) return;
-    setQuestion(text);
+  async function runQuick(kind: InvestigationKind) {
+    if (loading) return;
     setLoading(true);
     setError(null);
-    setRawOpen(false);
+    setLastRun({ mode: "quick", kind });
     try {
-      const res = await fetchAgentChat(text);
-      setResult(res);
-      if (res.error && res.ok === false && !res.answer) {
-        setError(res.error);
-      }
+      const next = await runInvestigation(kind, health);
+      setResult(next);
+      onFocus(next.target);
     } catch (err) {
-      setResult(null);
-      setError(err instanceof ApiError ? err.message : "问答失败");
+      setError(err instanceof Error ? err.message : "快捷调查失败");
     } finally {
       setLoading(false);
     }
   }
 
+  async function runChat(textOverride?: string) {
+    const text = (textOverride ?? question).trim();
+    if (!text || loading) return;
+    setQuestion(text);
+    setLoading(true);
+    setError(null);
+    setAgentUnavailable(false);
+    setLastRun({ mode: "chat", question: text });
+    try {
+      const agent = await fetchAgentChat(text);
+      if (agent.ok === false || agent.error || !agent.answer) {
+        throw new ApiError(
+          agent.error || "自然语言 Agent 暂不可用",
+          503,
+        );
+      }
+      const kind = inferInvestigationKind(text);
+      const evidence = await runInvestigation(kind, health, text);
+      evidence.conclusion = agent.answer;
+      evidence.agentMode = agent.mode || "llm";
+      evidence.agentSteps = agent.steps || [];
+      setResult(evidence);
+      onFocus(evidence.target);
+    } catch (err) {
+      setAgentUnavailable(true);
+      setError(
+        err instanceof ApiError
+          ? `自然语言 Agent 暂不可用：${err.message}`
+          : err instanceof Error
+            ? err.message
+            : "自然语言 Agent 暂不可用",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function retry() {
+    if (!lastRun) return;
+    if (lastRun.mode === "quick") void runQuick(lastRun.kind);
+    else void runChat(lastRun.question);
+  }
+
   if (!open) return null;
 
-  const modeLabel = result?.data_mode || dataModeHint || "—";
-
   return (
-    <div className="agent-overlay" role="presentation" onClick={onClose}>
+    <div className="reviewops-shell">
       <aside
-        className="agent-drawer"
+        id="reviewops-drawer"
+        className="reviewops-drawer"
         role="dialog"
-        aria-modal="true"
+        aria-modal="false"
         aria-labelledby={titleId}
-        onClick={(e) => e.stopPropagation()}
       >
-        <header className="agent-drawer__head">
+        <header className="reviewops-drawer__head">
           <div>
-            <p className="eyebrow">Intelligent Q&A</p>
-            <h2 id={titleId}>智能问答</h2>
+            <p>INTELLIGENCE / EVIDENCE / ACTION</p>
+            <h2 id={titleId}>ReviewOps Copilot</h2>
+            <span>智能风险调查</span>
           </div>
-          <button type="button" className="btn btn--ghost" onClick={onClose}>
-            关闭
+          <button type="button" aria-label="关闭调查面板" onClick={onClose}>
+            ×
           </button>
         </header>
 
-        <p className="agent-drawer__meta">
-          API <span className="mono">{getApiBase()}/api/agent/chat</span>
-          {" · "}
-          data_mode <span className="mono">{modeLabel}</span>
-          {" · "}
-          mode <span className="mono">{result?.mode || "llm"}</span>
-        </p>
-
-        <div className="agent-chips" aria-label="答辩剧本">
-          {DEMO_SCRIPTS.map((script) => (
-            <button
-              key={script.id}
-              type="button"
-              className="agent-chip"
-              disabled={loading}
-              onClick={() => {
-                setQuestion(script.question);
-                void send(script.question);
-              }}
-            >
-              {script.label}
-            </button>
-          ))}
+        <div className="reviewops-health">
+          <div>
+            <span className={health.ok ? "is-online" : "is-offline"} />
+            <small>BACKEND</small>
+            <strong>{health.ok ? "ONLINE" : "UNAVAILABLE"}</strong>
+          </div>
+          <div>
+            <small>DATA_MODE</small>
+            <strong className="mono">{health.data_mode || "—"}</strong>
+          </div>
+          <div>
+            <small>LOAD BATCH</small>
+            <strong className="mono">{health.load_batch_id || "—"}</strong>
+          </div>
+          <div>
+            <small>MODEL</small>
+            <strong className="mono">{health.model_version || "—"}</strong>
+          </div>
         </div>
 
-        <label className="agent-label" htmlFor="agent-q">
-          问题
-        </label>
-        <textarea
-          id="agent-q"
-          ref={inputRef}
-          className="agent-input"
-          rows={3}
-          value={question}
-          disabled={loading}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              void send();
-            }
-          }}
-          placeholder="输入问题，Enter 发送，Shift+Enter 换行"
+        {!warehouseReady ? (
+          <div className="reviewops-state reviewops-state--error" role="alert">
+            <strong>生产 warehouse 数据不可用</strong>
+            <p>
+              当前 DATA_MODE 为 {health.data_mode || "unknown"}。为避免使用非生产
+              数据，调查功能已停止。
+            </p>
+          </div>
+        ) : null}
+
+        <QuickActions
+          loading={loading}
+          disabled={!warehouseReady}
+          onRun={(kind) => void runQuick(kind)}
         />
 
-        <div className="agent-actions">
-          <button
-            type="button"
-            className="btn"
-            disabled={loading || !question.trim()}
-            onClick={() => void send()}
-          >
-            {loading ? "思考与取数中…" : "发送"}
-          </button>
-        </div>
-
-        {loading && (
-          <div className="agent-loading" aria-live="polite">
-            正在调用大模型与白名单工具，通常需要数十秒…
+        <section className="reviewops-query">
+          <div className="reviewops-section-label">
+            <span>NATURAL LANGUAGE</span>
+            <em className={agentUnavailable ? "is-unavailable" : ""}>
+              {agentUnavailable ? "AGENT UNAVAILABLE" : "/api/agent/chat"}
+            </em>
           </div>
-        )}
-
-        {error && (
-          <div className="banner banner--error agent-banner" role="alert">
-            <strong>问答失败</strong>
-            <p>{error}</p>
-          </div>
-        )}
-
-        {result && (
-          <div className="agent-result">
-            {result.error && (
-              <p className="agent-error-tag mono">error={result.error}</p>
-            )}
-
-            <h3 className="agent-section-title">Tool steps</h3>
-            {result.steps?.length ? (
-              <ul className="agent-steps">
-                {result.steps.map((step: AgentStep, idx: number) => (
-                  <li
-                    key={`${step.tool}-${idx}`}
-                    className={`agent-step ${step.ok ? "agent-step--ok" : "agent-step--bad"}`}
-                    title={step.source}
-                  >
-                    <span className="agent-step__dot" aria-hidden />
-                    <span className="agent-step__tool mono">{step.tool}</span>
-                    <span className="agent-step__summary">{step.summary}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="agent-empty">本次无 tool call（若问数却为空，请检查模型/提示词）</p>
-            )}
-
-            <h3 className="agent-section-title">Answer</h3>
-            <div
-              className="agent-answer"
-              dangerouslySetInnerHTML={{
-                __html: lightFormat(result.answer || "（无文本）"),
+          <div className="reviewops-query__box">
+            <textarea
+              ref={inputRef}
+              value={question}
+              rows={2}
+              disabled={loading || !warehouseReady}
+              onChange={(event) => setQuestion(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  void runChat();
+                }
               }}
+              placeholder="例如：一星评论和模型预测是否一致？"
+              aria-label="风险调查问题"
             />
-
             <button
               type="button"
-              className="btn btn--ghost agent-raw-toggle"
-              onClick={() => setRawOpen((v) => !v)}
+              disabled={loading || !warehouseReady || !question.trim()}
+              onClick={() => void runChat()}
             >
-              {rawOpen ? "收起原始 JSON" : "展开原始 JSON"}
+              调查
             </button>
-            {rawOpen && (
-              <pre className="agent-raw mono">{JSON.stringify(result, null, 2)}</pre>
-            )}
           </div>
-        )}
+          <small>
+            自由提问调用 {getApiBase()}/api/agent/chat；失败时快捷调查仍直接使用
+            warehouse GET API。
+          </small>
+        </section>
+
+        {loading ? (
+          <div className="reviewops-state reviewops-state--progress" aria-live="polite">
+            <span className="reviewops-spinner" aria-hidden />
+            <div>
+              <strong>正在构建证据链</strong>
+              <ol className="reviewops-progress" aria-label="调查进度">
+                <li>读取数据</li>
+                <li>分析风险</li>
+                <li>整理证据</li>
+                <li>生成结论</li>
+              </ol>
+            </div>
+          </div>
+        ) : null}
+
+        {error ? (
+          <div className="reviewops-state reviewops-state--error" role="alert">
+            <div>
+              <strong>{agentUnavailable ? "自然语言 Agent 暂不可用" : "调查失败"}</strong>
+              <p>{error}</p>
+              {agentUnavailable ? (
+                <small>上方快捷调查不依赖 LLM，仍可正常使用。</small>
+              ) : null}
+            </div>
+            <button type="button" onClick={retry}>
+              重试
+            </button>
+          </div>
+        ) : null}
+
+        {!loading && !error && !result ? (
+          <div className="reviewops-state reviewops-state--empty">
+            <strong>等待调查指令</strong>
+            <p>选择快捷调查，或输入一个与当前生产批次有关的问题。</p>
+          </div>
+        ) : null}
+
+        {result ? <InvestigationTimeline result={result} onFocus={onFocus} /> : null}
       </aside>
     </div>
   );

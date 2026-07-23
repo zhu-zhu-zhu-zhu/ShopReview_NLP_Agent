@@ -1,4 +1,4 @@
-"""Shared tool helpers for Stage H Agent."""
+"""Shared helpers for production Agent tools."""
 
 from __future__ import annotations
 
@@ -9,21 +9,18 @@ from typing import Any
 
 from agent.adapters.base import AdapterResult, MetricsAdapter, fail_result
 from agent.adapters.http_api import HttpApiAdapter
-from agent.adapters.smoke_json import SmokeJsonAdapter
 from agent.config import get_settings, repo_root
 
 ASPECT_VOCABULARY = frozenset(
     {
-        "size",
-        "color",
-        "material",
+        "appearance",
+        "size_fit",
         "comfort",
-        "workmanship",
-        "description_mismatch",
-        "packaging",
-        "delivery",
-        "price",
-        "other",
+        "material",
+        "price_value",
+        "quality",
+        "shipping_packaging",
+        "durability",
     }
 )
 
@@ -51,8 +48,6 @@ def get_adapter() -> MetricsAdapter:
         from agent.adapters.inprocess import InProcessAdapter
 
         return InProcessAdapter()
-    if settings.data_mode == "smoke":
-        return SmokeJsonAdapter()
     return HttpApiAdapter(settings)
 
 
@@ -69,19 +64,28 @@ def summarize_for_step(tool: str, result: dict[str, Any] | AdapterResult) -> str
             f"negative_rate={data.get('negative_rate')}, "
             f"average_rating={data.get('average_rating')}"
         )
-    if tool == "get_top_negative_products" and isinstance(data, list):
+    if tool in {
+        "get_top_negative_products",
+        "get_top_positive_products",
+    } and isinstance(data, list):
         head = data[0].get("parent_asin") if data and isinstance(data[0], dict) else None
+        return f"n={len(data)}" + (f", top={head}" if head else "")
+    if tool in {
+        "get_top_negative_stores",
+        "get_top_positive_stores",
+    } and isinstance(data, list):
+        head = data[0].get("store_name") if data and isinstance(data[0], dict) else None
         return f"n={len(data)}" + (f", top={head}" if head else "")
     if tool == "get_aspect_stats" and isinstance(data, list):
         return f"n={len(data)}"
     if tool == "get_negative_reasons" and isinstance(data, list):
         return f"n={len(data)}"
-    if tool in {
-        "get_sentiment_trend",
-        "get_alerts",
-        "search_review_samples",
-    }:
-        return f"ok=false error={result.get('error')}"
+    if tool == "get_data_health" and isinstance(data, dict):
+        return (
+            f"data_mode={data.get('data_mode')}, "
+            f"batch={data.get('load_batch_id')}, "
+            f"model={data.get('model_version')}"
+        )
     if isinstance(data, list):
         return f"n={len(data)}"
     if isinstance(data, dict):

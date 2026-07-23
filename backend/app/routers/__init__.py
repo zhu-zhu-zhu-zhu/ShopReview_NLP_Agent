@@ -1,4 +1,4 @@
-"""HTTP routers for stage-G metrics APIs + Stage H agent chat."""
+"""HTTP routers for production metrics APIs and Agent chat."""
 
 from app.routers import (
     agent_chat,

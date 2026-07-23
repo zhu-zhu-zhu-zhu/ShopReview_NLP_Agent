@@ -7,8 +7,6 @@ from fastapi.responses import JSONResponse
 
 from app.providers import get_provider
 from app.providers.base import ProviderError
-from app.providers.smoke_json import SmokeJsonProvider
-from app.providers.warehouse import WarehouseProvider
 
 router = APIRouter(tags=["negative-reasons"])
 
@@ -18,9 +16,7 @@ def _clamp(value: int, low: int, high: int) -> int:
 
 
 def _provider_error_response(exc: ProviderError) -> JSONResponse:
-    status = (
-        501 if exc.error in {"not_available", "not_available_in_smoke"} else 500
-    )
+    status = 501 if exc.error == "not_available" else 500
     return JSONResponse(
         status_code=status,
         content={"ok": False, "error": exc.error, "message": exc.message},
@@ -38,12 +34,7 @@ def negative_reasons(
         rows = provider.get_negative_reasons(
             limit=limit, parent_asin=parent_asin
         )
-        if isinstance(provider, SmokeJsonProvider):
-            meta = provider.dataset_meta("negative_reasons.json")
-        elif isinstance(provider, WarehouseProvider):
-            meta = provider.response_meta("warehouse:negative-reasons")
-        else:
-            meta = provider.response_meta("warehouse:negative-reasons")
+        meta = provider.response_meta("warehouse:negative-reasons")
         return {"ok": True, "data": rows, "meta": meta}
     except ProviderError as exc:
         return _provider_error_response(exc)

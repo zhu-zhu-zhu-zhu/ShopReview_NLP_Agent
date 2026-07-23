@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ApiError,
+  clearApiCache,
   fetchAlerts,
   fetchAspects,
   fetchCategories,
@@ -9,6 +10,8 @@ import {
   fetchHealth,
   fetchKpi,
   fetchMonthlyTrend,
+  fetchPositiveProducts,
+  fetchPositiveStores,
   fetchProducts,
   fetchRatingMatrix,
   fetchReasons,
@@ -36,6 +39,7 @@ export type ServingBoardData = {
   health: HealthPayload;
   kpi: KpiRecord;
   products: ProductRow[];
+  positiveProducts: ProductRow[];
   aspects: AspectRow[];
   reasons: ReasonRow[];
   daily: TrendPoint[];
@@ -44,6 +48,7 @@ export type ServingBoardData = {
   samples: SampleRow[];
   categories: CategoryRow[];
   stores: StoreRow[];
+  positiveStores: StoreRow[];
   verified: VerifiedRow[];
   matrix: MatrixCell[];
   confidence: ConfidenceRow[];
@@ -60,7 +65,8 @@ export function useServingBoardData() {
   const [loading, setLoading] = useState(true);
   const [loadedAt, setLoadedAt] = useState("");
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (force = false) => {
+    if (force) clearApiCache();
     setLoading(true);
     setError(null);
     try {
@@ -68,6 +74,7 @@ export function useServingBoardData() {
         fetchHealth(),
         fetchKpi(),
         fetchProducts(),
+        fetchPositiveProducts(),
         fetchAspects(),
         fetchReasons(),
         fetchDailyTrend(),
@@ -76,6 +83,7 @@ export function useServingBoardData() {
         fetchSamples(),
         fetchCategories(),
         fetchStores(),
+        fetchPositiveStores(),
         fetchVerified(),
         fetchRatingMatrix(),
         fetchConfidence(),
@@ -84,6 +92,7 @@ export function useServingBoardData() {
         health,
         kpiWrap,
         productsWrap,
+        positiveProductsWrap,
         aspectsWrap,
         reasonsWrap,
         dailyWrap,
@@ -92,19 +101,26 @@ export function useServingBoardData() {
         samplesWrap,
         categoriesWrap,
         storesWrap,
+        positiveStoresWrap,
         verifiedWrap,
         matrixWrap,
         confidenceWrap,
       ] = results;
 
-      if (!kpiWrap.ok || !productsWrap.ok) {
-        throw new Error("核心 KPI / 商品接口返回 ok=false");
+      if (
+        !kpiWrap.ok ||
+        !productsWrap.ok ||
+        !positiveProductsWrap.ok ||
+        !positiveStoresWrap.ok
+      ) {
+        throw new Error("核心 KPI / 商品或店铺榜单接口返回 ok=false");
       }
 
       setData({
         health,
         kpi: kpiWrap.data,
         products: productsWrap.data,
+        positiveProducts: positiveProductsWrap.data,
         aspects: unwrap(aspectsWrap, []),
         reasons: unwrap(reasonsWrap, []),
         daily: unwrap(dailyWrap, []),
@@ -113,6 +129,7 @@ export function useServingBoardData() {
         samples: unwrap(samplesWrap, []),
         categories: unwrap(categoriesWrap, []),
         stores: unwrap(storesWrap, []),
+        positiveStores: positiveStoresWrap.data,
         verified: unwrap(verifiedWrap, []),
         matrix: unwrap(matrixWrap, []),
         confidence: unwrap(confidenceWrap, []),
@@ -129,7 +146,7 @@ export function useServingBoardData() {
   }, []);
 
   useEffect(() => {
-    void reload();
+    void reload(false);
   }, [reload]);
 
   return { data, error, loading, loadedAt, reload };

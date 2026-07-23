@@ -1,4 +1,4 @@
-"""In-process adapter — call Stage G providers without nested HTTP (avoids deadlock)."""
+"""Call the production provider in-process without nested HTTP."""
 
 from __future__ import annotations
 
@@ -15,17 +15,9 @@ class InProcessAdapter(MetricsAdapter):
 
         return get_provider()
 
-    def _meta_from_provider(self, filename: str) -> dict[str, Any]:
+    def _meta_from_provider(self, source_name: str) -> dict[str, Any]:
         provider = self._provider()
-        if hasattr(provider, "dataset_meta"):
-            return provider.dataset_meta(filename)
-        return {
-            "schema_version": "draft_v0.1",
-            "data_scope": "",
-            "source": f"inprocess:{filename}",
-            "production_business_metrics": False,
-            "data_mode": "smoke",
-        }
+        return provider.response_meta(f"warehouse:{source_name}")
 
     def _ok(self, data: Any, *, filename: str, source: str) -> AdapterResult:
         meta = self._meta_from_provider(filename)
@@ -65,7 +57,7 @@ class InProcessAdapter(MetricsAdapter):
     ) -> AdapterResult:
         try:
             row = self._provider().get_kpi()
-            result = self._ok(row, filename="sentiment_overview.json", source="inprocess:kpi")
+            result = self._ok(row, filename="dws_sentiment_overview", source="inprocess:kpi")
             if start_date and end_date:
                 result["message"] = (
                     "当前为快照数据，不支持时间窗过滤；已忽略 start_date/end_date"
@@ -87,7 +79,7 @@ class InProcessAdapter(MetricsAdapter):
             rows = self._provider().get_top_negative_products(limit, min_reviews)
             return self._ok(
                 rows,
-                filename="product_sentiment.json",
+                filename="dws_product_sentiment",
                 source="inprocess:top-negative-products",
             )
         except Exception as exc:  # noqa: BLE001
@@ -97,12 +89,31 @@ class InProcessAdapter(MetricsAdapter):
                 message=str(exc),
             )
 
+    def get_top_positive_products(
+        self,
+        limit: int = 5,
+        min_reviews: int = 5,
+    ) -> AdapterResult:
+        try:
+            rows = self._provider().get_top_positive_products(limit, min_reviews)
+            return self._ok(
+                rows,
+                filename="dws_product_sentiment",
+                source="inprocess:top-positive-products",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return fail_result(
+                "upstream_unavailable",
+                source="inprocess:top-positive-products",
+                message=str(exc),
+            )
+
     def get_aspects(self, aspect: str | None = None) -> AdapterResult:
         try:
             rows = self._provider().get_aspects(aspect)
             return self._ok(
                 rows,
-                filename="aspect_summary.json",
+                filename="dws_aspect_summary",
                 source="inprocess:aspects",
             )
         except Exception as exc:  # noqa: BLE001
@@ -115,13 +126,12 @@ class InProcessAdapter(MetricsAdapter):
     def get_negative_reasons(
         self,
         limit: int = 10,
-        parent_asin: str | None = None,
     ) -> AdapterResult:
         try:
-            rows = self._provider().get_negative_reasons(limit, parent_asin)
+            rows = self._provider().get_negative_reasons(limit, None)
             return self._ok(
                 rows,
-                filename="negative_reasons.json",
+                filename="dws_negative_reason_summary",
                 source="inprocess:negative-reasons",
             )
         except Exception as exc:  # noqa: BLE001
@@ -131,23 +141,175 @@ class InProcessAdapter(MetricsAdapter):
                 message=str(exc),
             )
 
-    def get_trend(self) -> AdapterResult:
-        return fail_result(
-            "not_available_in_smoke",
-            source="inprocess:trend",
-            message="当前为 smoke 快照，无日趋势/时间序列数据",
-        )
+    def get_trend(self, recent_days: int = 365) -> AdapterResult:
+        try:
+            rows = self._provider().get_trend(recent_days=recent_days)
+            return self._ok(
+                rows,
+                filename="dws_sentiment_daily",
+                source="inprocess:trend",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return fail_result(
+                "upstream_unavailable",
+                source="inprocess:trend",
+                message=str(exc),
+            )
 
-    def get_alerts(self) -> AdapterResult:
-        return fail_result(
-            "not_available_in_smoke",
-            source="inprocess:alerts",
-            message="当前为 smoke 快照，无告警快照数据",
-        )
+    def get_monthly_trend(self, limit: int = 24) -> AdapterResult:
+        try:
+            rows = self._provider().get_monthly_trend()
+            rows = rows[-limit:]
+            return self._ok(
+                rows,
+                filename="dws_monthly_sentiment",
+                source="inprocess:monthly-trend",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return fail_result(
+                "upstream_unavailable",
+                source="inprocess:monthly-trend",
+                message=str(exc),
+            )
 
-    def get_samples(self) -> AdapterResult:
-        return fail_result(
-            "not_available_in_smoke",
-            source="inprocess:samples",
-            message="当前为 smoke 安全导出，不含评论文本样例",
-        )
+    def get_categories(self) -> AdapterResult:
+        try:
+            rows = self._provider().get_categories()
+            return self._ok(
+                rows,
+                filename="dws_category_sentiment",
+                source="inprocess:categories",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return fail_result(
+                "upstream_unavailable",
+                source="inprocess:categories",
+                message=str(exc),
+            )
+
+    def get_stores(
+        self,
+        limit: int = 10,
+        min_reviews: int = 20,
+    ) -> AdapterResult:
+        try:
+            rows = self._provider().get_stores(limit, min_reviews)
+            return self._ok(
+                rows,
+                filename="dws_store_sentiment",
+                source="inprocess:stores",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return fail_result(
+                "upstream_unavailable",
+                source="inprocess:stores",
+                message=str(exc),
+            )
+
+    def get_top_positive_stores(
+        self,
+        limit: int = 10,
+        min_reviews: int = 20,
+    ) -> AdapterResult:
+        try:
+            rows = self._provider().get_top_positive_stores(limit, min_reviews)
+            return self._ok(
+                rows,
+                filename="dws_store_sentiment",
+                source="inprocess:top-positive-stores",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return fail_result(
+                "upstream_unavailable",
+                source="inprocess:top-positive-stores",
+                message=str(exc),
+            )
+
+    def get_verified_purchase(self) -> AdapterResult:
+        try:
+            rows = self._provider().get_verified_purchase()
+            return self._ok(
+                rows,
+                filename="dws_verified_purchase_sentiment",
+                source="inprocess:verified-purchase",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return fail_result(
+                "upstream_unavailable",
+                source="inprocess:verified-purchase",
+                message=str(exc),
+            )
+
+    def get_rating_matrix(self) -> AdapterResult:
+        try:
+            rows = self._provider().get_rating_matrix()
+            return self._ok(
+                rows,
+                filename="dws_rating_prediction_matrix",
+                source="inprocess:rating-matrix",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return fail_result(
+                "upstream_unavailable",
+                source="inprocess:rating-matrix",
+                message=str(exc),
+            )
+
+    def get_confidence(self) -> AdapterResult:
+        try:
+            rows = self._provider().get_confidence()
+            return self._ok(
+                rows,
+                filename="dws_prediction_confidence",
+                source="inprocess:confidence",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return fail_result(
+                "upstream_unavailable",
+                source="inprocess:confidence",
+                message=str(exc),
+            )
+
+    def get_alerts(
+        self,
+        limit: int = 20,
+        alert_level: str | None = None,
+    ) -> AdapterResult:
+        try:
+            rows = self._provider().get_alerts(
+                limit=limit,
+                alert_level=alert_level,
+            )
+            return self._ok(
+                rows,
+                filename="dws_sentiment_alerts",
+                source="inprocess:alerts",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return fail_result(
+                "upstream_unavailable",
+                source="inprocess:alerts",
+                message=str(exc),
+            )
+
+    def get_samples(
+        self,
+        limit: int = 10,
+        pred_label: str | None = None,
+    ) -> AdapterResult:
+        try:
+            rows = self._provider().get_samples(
+                limit=limit,
+                pred_label=pred_label,
+            )
+            return self._ok(
+                rows,
+                filename="dws_review_samples",
+                source="inprocess:samples",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return fail_result(
+                "upstream_unavailable",
+                source="inprocess:samples",
+                message=str(exc),
+            )

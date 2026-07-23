@@ -1,70 +1,65 @@
-# Stage G backend (smoke-first)
+# ShopReview Production Metrics API
 
-FastAPI 指标服务：供大屏与后续 Agent 共用。默认读取 `exports/agent/smoke/`。
-
-完整复现步骤见：`docs/阶段G_冒烟运行手册.md`。
-
-## 启动顺序
-
-1. **先**运行本目录 `start.bat`（端口 **8080**）  
-2. 再运行 `dashboard\start.bat`（端口 **5173**）
-
-也可在仓库根执行 `start_smoke_demo.bat` 一次开两个窗口。
-
-## 首次安装
-
-在仓库根：
-
-```bat
-python -m venv .venv
-.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
-copy backend\.env.example .env
-backend\start.bat
-```
+FastAPI 服务通过只读 `agent_reader` 查询 `shopreview_serving`，为大屏和 Agent 提供 `prod_v1_100k` + `tfidf_logreg_oof_v1` 的 production serving v2 指标。
 
 ## 配置
 
-| 变量 | 含义 |
-|------|------|
-| `DATA_MODE=smoke` | 冒烟：读 JSON 导出（默认） |
-| `DATA_MODE=warehouse` | 正式：读队友 MySQL 服务库（Hive DWS 同步） |
-| `SMOKE_EXPORT_DIR` | 相对仓库根，默认 `exports/agent/smoke` |
-| `MYSQL_HOST` / `MYSQL_PORT` / `MYSQL_DATABASE` | 服务库地址 |
-| `MYSQL_USER` / `MYSQL_PASSWORD` | **只用** `agent_reader`（拒绝 root） |
-| `WAREHOUSE_LOAD_BATCH_ID` | 默认 `prod_v1_100k` |
-| `WAREHOUSE_MODEL_VERSION` | 默认 `tfidf_logreg_oof_v1` |
-| `CORS_ORIGINS` | 需包含 `http://127.0.0.1:5173` |
+复制 `backend/.env.example` 为 `backend/.env`，只在本机填入现有只读密码：
 
-密钥写在 `backend/.env`（已 gitignore），勿提交密码。
-
-## 正式 warehouse 启动
-
-1. 确认局域网可达：`Test-NetConnection <MYSQL_HOST> -Port 3306`  
-2. 填写 `backend/.env`（可参考 `.env.example`）  
-3. 安装依赖后运行连通检查：
-
-```bat
-.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
-.venv\Scripts\python.exe backend\scripts\check_mysql_serving.py
-backend\start_warehouse.bat
+```env
+DATA_MODE=warehouse
+API_HOST=127.0.0.1
+API_PORT=8080
+MYSQL_HOST=127.0.0.1
+MYSQL_PORT=3306
+MYSQL_USER=agent_reader
+MYSQL_PASSWORD=
+MYSQL_DATABASE=shopreview_serving
+WAREHOUSE_LOAD_BATCH_ID=prod_v1_100k
+WAREHOUSE_MODEL_VERSION=tfidf_logreg_oof_v1
 ```
+
+`backend/.env` 被 Git 忽略。应用层会拒绝 `MYSQL_USER=root`。
+
+## 启动与健康检查
+
+```powershell
+cd D:\bdt-app-course\projects\ShopReview_NLP_Agent
+.\.venv\Scripts\python.exe backend\scripts\check_mysql_serving.py
+.\backend\start_warehouse.bat
+```
+
+访问 `http://127.0.0.1:8080/docs`。启动时 MySQL 暂时不可用不会伪造数据，业务接口会返回 `upstream_unavailable`。
+
+## 数据访问约束
+
+- provider 唯一实现为 `WarehouseProvider`；
+- 所有业务查询同时过滤 `load_batch_id` 与 `model_version`；
+- 查询参数通过 MySQL driver 参数化；
+- 用户输入不能控制表名；
+- API 只读，不包含 INSERT、UPDATE、DELETE 或 DDL；
+- 所有成功响应标记 `data_mode=warehouse`、`schema_version=serving_v2` 和 `production_business_metrics=true`。
 
 ## 接口
 
-契约：`docs/api_contract_v0.md`
+| Method | Path | 用途 |
+|---|---|---|
+| GET | `/api/health` | 批次、模型、13 张表行数与来源 |
+| GET | `/api/kpi` | 总评论量、情感分布、评分和置信度 |
+| GET | `/api/trend` | 日趋势；支持日期、limit 或 recent_days |
+| GET | `/api/trends/monthly` | 月度趋势 |
+| GET | `/api/top-negative-products` | 商品差评榜 |
+| GET | `/api/top-positive-products` | 商品好评榜 |
+| GET | `/api/stores` | 店铺差评榜 |
+| GET | `/api/top-positive-stores` | 店铺好评榜 |
+| GET | `/api/categories` | 品类指标 |
+| GET | `/api/verified-purchase` | 认证购买对比 |
+| GET | `/api/rating-matrix` | 星级 × 预测矩阵 |
+| GET | `/api/confidence` | 预测置信度分桶 |
+| GET | `/api/aspects` | 规则方面统计 |
+| GET | `/api/negative-reasons` | 全局负面原因 |
+| GET | `/api/alerts` | 风险告警 |
+| GET | `/api/samples` | 脱敏评论样例 |
+| POST | `/api/agent/chat` | DeepSeek Agent 调查 |
 
-- smoke / warehouse：`/api/health` `/api/kpi` `/api/top-negative-products`
-- warehouse v2：`/api/trend` `/api/trends/monthly` `/api/aspects` `/api/negative-reasons` `/api/alerts` `/api/samples`
-- warehouse v2 扩展：`/api/categories` `/api/stores` `/api/verified-purchase` `/api/rating-matrix` `/api/confidence`
-- smoke 下扩展接口多为 501
-
-## 错误态
-
-- 导出目录缺失或文件损坏：启动校验失败 / 接口 500  
-- MySQL 不可达：`upstream_unavailable`  
-- 占位 / 未同步能力：501（禁止返回假全 0 成功数据）
-
-## 冒烟声明
-
-smoke：`production_business_metrics=false`。  
-warehouse：`production_business_metrics=true`，数据来自 MySQL 服务库只读账号。
+详细参数、字段与错误响应见 [API_REFERENCE.md](../docs/API_REFERENCE.md)。

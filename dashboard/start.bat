@@ -19,10 +19,10 @@ if not exist ".env" if exist ".env.example" (
 )
 
 echo ========================================
-echo  ShopReview Dashboard  ^(Stage G smoke^)
+echo  ShopReview Production Dashboard
 echo  http://127.0.0.1:5173
 echo  Requires API: http://127.0.0.1:8080
-echo  Start backend\start.bat FIRST
+echo  Start backend\start_warehouse.bat FIRST
 echo ========================================
 
 call npm.cmd run dev -- --host 127.0.0.1 --port 5173

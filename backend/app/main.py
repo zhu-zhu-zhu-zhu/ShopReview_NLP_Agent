@@ -26,7 +26,7 @@ logger = logging.getLogger("shopreview.backend")
 app = FastAPI(
     title="ShopReview Metrics API",
     version="0.4.0",
-    description="Metrics service for dashboard and Agent (smoke JSON or MySQL serving v2)",
+    description="Production MySQL warehouse metrics service for dashboard and Agent",
 )
 
 settings = get_settings()
@@ -55,22 +55,12 @@ def validate_provider_on_startup() -> None:
     reset_provider_cache()
     cfg = get_settings()
     logger.info(
-        "Starting API data_mode=%s smoke_dir=%s mysql_host=%s",
+        "Starting production API data_mode=%s mysql_host=%s",
         cfg.data_mode,
-        cfg.smoke_export_dir,
         cfg.mysql_host or "-",
     )
     try:
         provider = get_provider()
-        if cfg.data_mode == "smoke":
-            meta = provider.get_health_meta()
-            logger.info(
-                "Smoke provider OK export_name=%s production_business_metrics=%s",
-                meta.get("export_name"),
-                meta.get("production_business_metrics"),
-            )
-            return
-        # warehouse: try health; log soft failure so API can still boot for debugging
         meta = provider.get_health_meta()
         logger.info(
             "Warehouse provider OK model=%s batch=%s counts=%s",
@@ -79,9 +69,6 @@ def validate_provider_on_startup() -> None:
             meta.get("record_counts"),
         )
     except ProviderError as exc:
-        if cfg.data_mode == "smoke":
-            logger.error("Smoke provider validation failed: %s", exc.message)
-            raise
         logger.error(
             "Warehouse MySQL not reachable at startup: %s "
             "(API will return 500/upstream_unavailable until network is up)",

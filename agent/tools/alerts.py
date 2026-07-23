@@ -1,16 +1,14 @@
-"""Tool: get_alerts → GET /api/alerts (Stage G placeholder, Scheme A)."""
+"""Tool: get_alerts → GET /api/alerts."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from agent.adapters.http_api import HttpApiAdapter
-from agent.tools.base import as_tool_dict
+from agent.tools.base import as_tool_dict, clamp_int, get_adapter, invalid_args
 
 DESCRIPTION = (
-    "查询评论/情感相关告警快照。"
-    "当前 smoke 无告警数据；调用后通常得到 not_available_in_smoke。"
-    "禁止编造告警列表。"
+    "查询生产评论情感告警，可按 CRITICAL、HIGH、MEDIUM、LOW 过滤。"
+    "返回告警实体、指标、阈值和告警信息；禁止编造告警。"
 )
 
 OPENAI_SCHEMA: dict[str, Any] = {
@@ -20,7 +18,17 @@ OPENAI_SCHEMA: dict[str, Any] = {
         "description": DESCRIPTION,
         "parameters": {
             "type": "object",
-            "properties": {},
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "description": "返回条数，默认 20，范围 1～50",
+                },
+                "alert_level": {
+                    "type": "string",
+                    "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+                    "description": "可选告警等级",
+                },
+            },
             "additionalProperties": False,
         },
     },
@@ -28,5 +36,16 @@ OPENAI_SCHEMA: dict[str, Any] = {
 
 
 def run(arguments: dict[str, Any] | None = None) -> dict[str, Any]:
-    _ = arguments
-    return as_tool_dict(HttpApiAdapter().get_alerts())
+    args = arguments or {}
+    level = str(args.get("alert_level") or "").upper() or None
+    if level not in {None, "CRITICAL", "HIGH", "MEDIUM", "LOW"}:
+        return invalid_args(
+            "alert_level 必须是 CRITICAL/HIGH/MEDIUM/LOW",
+            source="tool:get_alerts",
+        )
+    return as_tool_dict(
+        get_adapter().get_alerts(
+            limit=clamp_int(args.get("limit"), 1, 50, 20),
+            alert_level=level,
+        )
+    )

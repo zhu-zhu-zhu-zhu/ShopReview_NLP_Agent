@@ -1,1 +1,1 @@
-"""Pydantic response helpers for stage-G APIs."""
+"""Pydantic response helpers for production APIs."""

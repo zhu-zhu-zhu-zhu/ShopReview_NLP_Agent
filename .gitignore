@@ -23,6 +23,7 @@ venv/
 # 前端
 node_modules/
 dist/
+*.tsbuildinfo
 
 # 密钥与本地配置
 .env

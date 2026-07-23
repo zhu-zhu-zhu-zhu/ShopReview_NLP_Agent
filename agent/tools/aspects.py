@@ -12,10 +12,10 @@ from agent.tools.base import (
 )
 
 DESCRIPTION = (
-    "获取方面/原因聚合统计。"
+    "获取关键词规则方面聚合统计。"
     "aspect 使用受控英文词："
-    "size, color, material, comfort, workmanship, description_mismatch, "
-    "packaging, delivery, price, other。"
+    "appearance, size_fit, comfort, material, price_value, quality, "
+    "shipping_packaging, durability。"
     "可用中文解释词义，但调用本工具时 aspect 参数必须用英文受控词。"
 )
 
@@ -30,7 +30,7 @@ OPENAI_SCHEMA: dict[str, Any] = {
                 "aspect": {
                     "type": "string",
                     "description": (
-                        "可选过滤；必须是受控英文词之一，例如 size / delivery"
+                        "可选过滤；必须是受控英文词之一，例如 size_fit / durability"
                     ),
                 },
             },

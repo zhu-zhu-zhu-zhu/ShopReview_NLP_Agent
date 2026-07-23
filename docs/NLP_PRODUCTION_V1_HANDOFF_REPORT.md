@@ -1,111 +1,132 @@
-# Amazon Fashion 正式 NLP 数据交付报告
+# Amazon Fashion NLP 输入交付与正式预测写回报告
 
-## 一、交付范围
+## 1. 范围
 
-| 项目 | 实测结果 |
+| 项目 | 结果 |
 |---|---:|
-| 来源 Hive 表 | `review_dw.dwd_amazon_fashion_review` |
-| 批次 ID | `prod_v1_100k` |
-| DWD 行数 | 99,703 |
-| 符合 NLP 输入条件的行数 | 99,703 |
-| 导出行数 | 99,703 |
+| Hive 来源 | `review_dw.dwd_amazon_fashion_review` |
+| 批次 | `prod_v1_100k` |
+| DWD / eligible / 导出 | 99,703 / 99,703 / 99,703 |
+| 正式预测模型 | `tfidf_logreg_oof_v1` |
+| 正式预测方式 | 5-fold Stratified OOF |
+| 预测行数 | 99,703 |
+| 覆盖率 | 100% |
 
-`prod_v1_100k` 是本项目正式实验子集，不代表完整 Amazon Fashion 数据集。导出只读取该批次已清洗、去重并通过 DWD 质量门槛的记录，没有训练 NLP 模型，也没有生成或导入模型预测。
+production-v1 是正式实验子集，不代表完整 Amazon Fashion。
 
-## 二、输出字段
+## 2. NLP 输入
 
-| 字段 | 含义 | 是否必填 |
-|---|---|---|
-| `review_key` | 数仓生成的稳定评论标识，必须原样保留 | 是 |
-| `review_text_clean` | 已清洗且非空的评论文本 | 是 |
-| `rating_label` | 根据星级生成的弱监督标签 | 是 |
-| `rating` | 原始星级评分 | 是 |
-| `parent_asin` | 商品族标识 | 否 |
-| `main_category` | 元数据匹配后的商品主类目 | 否 |
-| `review_time` | 解析后的评论时间 | 否 |
-| `load_batch_id` | 数据批次标识，本次固定为 `prod_v1_100k` | 是 |
+字段固定为：
 
-导出 schema 严格限定为以上八个字段，不包含 `user_id`、原始元数据对象或其他隐私字段。
+`review_key`、`review_text_clean`、`rating_label`、`rating`、`parent_asin`、`main_category`、`review_time`、`load_batch_id`。
 
-## 三、弱标签说明
+输入不包含 `user_id`。`review_text_clean` 是唯一模型特征；评分、弱标签、商品和类目不进入 TF-IDF 特征。
 
-- 1–2 星映射为 `negative`；
-- 3 星映射为 `neutral`；
-- 4–5 星映射为 `positive`。
+### 输入质量
 
-`rating_label` 来自星级规则，是用于监督训练和评估准备的弱标签，不是 NLP 模型预测，也不能作为真实模型效果的证明。
+| Check | Result |
+|---|---:|
+| 唯一 `review_key` | 99,703 |
+| duplicate / blank key | 0 / 0 |
+| blank text | 0 |
+| illegal rating label | 0 |
+| negative / neutral / positive weak labels | 15,640 / 10,913 / 73,150 |
+| parent/category/time coverage | 100% / 100% / 100% |
 
-## 四、数据质量验证
+输入 JSONL：
 
-| 检查项 | 实测结果 | 结论 |
-|---|---:|---|
-| 导出唯一 `review_key` | 99,703 | PASS |
-| 重复 `review_key` | 0 | PASS |
-| null / 空白 `review_key` | 0 | PASS |
-| 空白 `review_text_clean` | 0 | PASS |
-| 非法 `rating_label` | 0 | PASS |
-| `negative` | 15,640 | 对账通过 |
-| `neutral` | 10,913 | 对账通过 |
-| `positive` | 73,150 | 对账通过 |
-| 评分范围 | 1.0–5.0 | PASS |
-| 有 `parent_asin` | 99,703（100%） | PASS |
-| 有 `main_category` | 99,703（100%） | PASS |
-| 有 `review_time` | 99,703（100%） | PASS |
-| Hive 导出表与 eligible DWD 差值 | 0 | PASS |
+- 路径：`data/processed/nlp_production_v1/nlp_input_prod_v1.jsonl`
+- 大小：46,005,546 bytes
+- SHA-256：`e10925187eea5fc34721778c0a6e2ea5b8c7492a1325fd0c49966dafe3f12714`
 
-导出表、JSONL、摘要与 manifest 的行数均为 99,703。JSONL 使用 UTF-8、`ensure_ascii=False` 和固定字段顺序逐行写出；写入采用临时文件替换，失败时不会留下半成品。由于当前 Hive 2.3.2 对多分区 Parquet 的自动小文件合并存在读取器兼容问题，导出 SQL 仅在本会话使用标准 `HiveInputFormat` 并关闭自动合并，未修改生产 DWD 或全局 Hive 配置。
+真实 JSONL 被 Git 忽略；仓库只保留安全 summary 和 manifest。
 
-## 五、输出文件
+## 3. 模型训练和评估
 
-| 文件 | 路径或结果 |
-|---|---|
-| 本地 NLP JSONL（Git 忽略） | `data/processed/nlp_production_v1/nlp_input_prod_v1.jsonl` |
-| 安全摘要 | `reports/nlp_handoff/nlp_input_prod_v1_summary.json` |
-| 交付 manifest | `reports/nlp_handoff/nlp_input_prod_v1_manifest.json` |
-| 文件大小 | 46,005,546 bytes |
-| SHA-256 | `e10925187eea5fc34721778c0a6e2ea5b8c7492a1325fd0c49966dafe3f12714` |
+- 算法：TF-IDF unigram+bigram + Logistic Regression；
+- 训练/验证/测试：79,762 / 9,970 / 9,971；
+- 分层划分：`random_state=42`；
+- 选择标准：验证集 macro-F1，其次 accuracy；
+- 选中 `C=0.5`；
+- untouched test accuracy：0.830408；
+- untouched test macro-F1：0.606527；
+- untouched test weighted-F1：0.810371。
 
-报告、摘要和 manifest 不包含完整评论文本、完整用户标识、凭据或 API 密钥。真实 JSONL 保持忽略和未跟踪状态。
+详细逐类结果见 `NLP_BASELINE_TRAINING_REPORT.md`。
 
-## 六、NLP 成员返回格式
+## 4. 正式 OOF 预测
 
-NLP 成员完成真实模型推理后，应返回：
+`StratifiedKFold(n_splits=5, shuffle=True, random_state=42)`。每条记录由没有训练过它的折模型预测，防止将同批训练内预测作为正式 warehouse 结果。
 
-- `review_key`
-- `pred_label`
-- `pred_score`
-- `model_version`
-- `inferred_at`
+预测字段：
 
-NLP 开发者不得重新生成、格式化或修改 `review_key`。数仓将使用原始键进行存在性、唯一性和写回对账。
+`review_key`、`pred_label`、`pred_score`、`negative_score`、`neutral_score`、`positive_score`、`model_version`、`inferred_at`。
 
-## 七、责任边界
+不得包含 rating、rating_label、评论文本或 user_id。
 
-数仓成员负责：
+### Contract validation
 
-- 准备清洗后的 NLP 输入；
-- 验证键、字段、标签和批次；
-- 导出数据并生成可审计摘要；
-- 后续导入并对账真实预测。
+| Check | Result |
+|---|---:|
+| physical / valid rows | 99,703 / 99,703 |
+| unique keys | 99,703 |
+| duplicate / missing / unknown | 0 / 0 / 0 |
+| coverage | 100% |
+| invalid labels/scores/timestamps | 0 |
+| forbidden/unexpected fields | 0 |
+| score min / mean / max | 0.336122 / 0.753397 / 0.999982 |
 
-NLP 成员负责：
+预测分布：
 
-- 训练 baseline 与主模型；
-- 评估并记录模型指标；
-- 返回预测结果和 `model_version`；
-- 完整保留数仓提供的 `review_key`。
+| Label | Count |
+|---|---:|
+| negative | 15,899 |
+| neutral | 18,943 |
+| positive | 64,861 |
 
-## 八、局限性
+正式预测 SHA-256：
 
-- 本次仅覆盖 production-v1 实验子集，不是完整 Amazon Fashion 数据集；
-- 弱标签来自星级评分，不等同于人工真值；
-- 尚未导入任何真实模型预测；
-- 尚未建设 production DWS。
+`6f864870573275f38a610b3d9c6b0bed3250e208061d81d2fc45edfc20f40f95`
 
-## 九、验收结论
+## 5. Hive write-back
 
-正式 DWD、eligible 输入、Hive 导出表和本地 JSONL 均为 99,703 行；键唯一性、必填字段、标签域、批次、schema 和 SHA-256 对账全部通过。
+预测经过本地契约验证和 control-A 转换后进入：
 
-NLP PRODUCTION EXPORT RESULT: PASS
+- `review_dw.stg_nlp_predictions`
+- `review_dw.dwd_review_sentiment`
+- `review_dw.vw_dwd_review_with_sentiment`
 
-NLP HANDOFF VALIDATION RESULT: PASS
+模型分区使用安全映射 `tfidf_logreg_oof_v1_e1bd04f73c2d`，业务 `model_version` 保持 `tfidf_logreg_oof_v1`。写回后 DWD 预测与评论键一一覆盖，并用于 production DWS。
+
+## 6. Full-data model
+
+OOF 完成后，另用 99,703 条记录训练 `models/tfidf_logreg_v1.joblib`，只用于未来未见评论推理，不参与本批正式 OOF。
+
+## 7. Serving result
+
+MySQL serving v2 已同步：
+
+- review_count：99,703；
+- positive / neutral / negative：64,861 / 18,943 / 15,899；
+- average_prediction_score：0.753397；
+- batch/model：`prod_v1_100k` / `tfidf_logreg_oof_v1`。
+
+## 8. Limitations
+
+- 训练目标是星级映射弱标签，不是人工真值；
+- neutral 类测试识别能力明显弱于 positive；
+- 基线训练存在达到 `max_iter=1000` 的收敛警告；
+- OOF 解决同批 in-sample 预测问题，但不等于线上时间外评估；
+- 全量模型只能用于未来新评论。
+
+## 9. Result
+
+NLP INPUT HANDOFF RESULT: PASS
+
+HELD-OUT TEST EVALUATION RESULT: PASS
+
+OOF PREDICTION CONTRACT RESULT: PASS
+
+WAREHOUSE WRITE-BACK RESULT: PASS
+
+MYSQL SERVING RECONCILIATION RESULT: PASS

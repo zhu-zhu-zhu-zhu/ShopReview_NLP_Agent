@@ -1,6 +1,8 @@
 # Amazon Fashion 数据集检查报告
 
 > **本报告仅为有界样本检查结果，不代表完整数据集统计。**
+>
+> 文档状态：历史输入检查结果已确认；后续 production-v1 ODS、DWD、NLP、DWS 和 serving 已完成。本报告中的数据仍只描述当时的 100,000/50,000 有界检查，不能用后续结果反向改写。
 
 ## 一、数据检查概况
 
@@ -29,7 +31,7 @@
 - 文件编码为 UTF-8，原始文件保持只读；
 - 未使用 pandas 将完整文件加载到内存；
 - 本地抽样采用 reservoir sampling（蓄水池抽样），`seed=42`；
-- Phase B 检查阶段未使用 HDFS、Hive 或 NLP 模型。
+- 本次有界检查运行本身未使用 HDFS、Hive 或 NLP 模型。
 
 ## 五、评论数据检查结果
 
@@ -113,7 +115,7 @@
 - 抽样方法：reservoir sampling；
 - 样本保留在本地并被 Git 忽略，未提交到仓库。
 
-## 十一、对数仓设计的影响
+## 十一、对已落地数仓设计的影响
 
 - 评论数据和商品元数据分别建立 ODS 表；
 - 使用 `parent_asin` 关联评论与商品元数据；
@@ -121,18 +123,22 @@
 - DWD 层需要明确处理空评论文本；
 - 商品元数据字段需要支持空值；
 - `rating` 可以映射为 weak label；
-- Hive 字段类型仍为 Draft，需后续继续验证。
+- 字段类型随后在 production-v1 ODS/DWD 中完成验证和落地。
 
 ## 十二、局限性
 
 - 本报告只检查了有界数据范围，不是完整数据集统计；
-- 尚未完成完整数据集的 distinct（去重计数）、duplicate（重复）和 join（关联）精确统计；
-- Phase B 检查阶段未执行 NLP 模型；
-- Phase B 检查阶段未执行 HDFS 或 Hive；
-- 本报告反映的是 Phase B 数据检查阶段，不能替代后续入仓和全量验证结果。
+- 该次检查没有计算完整公开数据集的 distinct、duplicate 和 join 精确统计；
+- 该次检查运行未执行 NLP 模型、HDFS 或 Hive；
+- 本报告不能替代 production-v1 入仓结果，也不能代表完整 Amazon Fashion；
+- 后续 production-v1 已在 Hive 精确得到 ODS 100,000、空文本 24、重复冗余 273、DWD 99,703。
 
-## 十三、下一步
+## 十三、后续完成情况
 
-在团队确认数据范围和字段后，继续准备正式 HDFS 数据落盘方式、Hive ODS 表结构和后续 DWD 清洗规则。
+- production-v1 HDFS 与 ODS 已完成；
+- DWD 清洗、去重和元数据关联已完成；
+- 99,703 条 NLP 输入与 5 折 OOF 预测已完成；
+- Hive DWS、MySQL serving v2、FastAPI、大屏和 Agent 已完成；
+- 最终状态见 `PRODUCTION_SYSTEM_ACCEPTANCE_REPORT.md`。
 
 > **本报告仅为有界样本检查结果，不代表完整数据集统计。**

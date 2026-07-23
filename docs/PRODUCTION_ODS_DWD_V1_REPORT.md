@@ -1,6 +1,8 @@
 # Amazon Fashion 生产版 ODS/DWD v1 验收报告
 
 > **本报告对应 production-v1 实验范围，不代表完整 Amazon Fashion 数据集统计。**
+>
+> 文档状态：ODS/DWD 验收结果保持不变；后续 NLP、DWS、MySQL、API、大屏和 Agent 已完成。
 
 ## 一、生产数据范围
 
@@ -35,7 +37,7 @@
 - `/data/review_dw/ods/amazon_fashion_review/load_batch_id=prod_v1_100k`
 - `/data/review_dw/ods/amazon_fashion_meta/load_batch_id=prod_v1_100k`
 
-每个批次目录最终只有一个对应的 production-v1 文本文件。原始 JSONL 未上传，`/data/review_dw/smoke/` 与 `/data/review_dw/smoke_d/` 未修改。
+每个批次目录最终只有一个对应的 production-v1 文本文件，原始 JSONL 未上传。
 
 ## 四、ODS Tables
 
@@ -105,15 +107,23 @@
 
 发现的主要质量问题是 273 组源端精确重复评论。严重度为中，置信度高：若不处理会破坏 `review_key` 唯一性并影响后续预测写回。production-v1 已在 DWD 保留每组一条，ODS 仍完整保留全部源记录以便追溯。
 
-## 八、Limitations
+## 八、范围与限制
 
 - production-v1 只使用前 100,000 个合法评论对象，不是完整数据集；
 - 元数据只提取该评论范围需要的商品；
 - `rating_label` 是评分弱标签，不是真实 NLP 预测；
-- 尚未导入真实模型预测，也未执行真实方面提取；
-- 尚未建设 production DWS、FastAPI、Dashboard 或最终 Agent 集成。
+- 本层的 `rating_label` 仍只是评分弱标签；
+- 正式模型预测、规则方面、DWS 和应用层结果属于后续链路，不应混入本 ODS/DWD 行数口径。
 
-## 九、Result
+## 九、后续链路状态
+
+- NLP 输入：99,703；
+- 正式 OOF 预测：99,703，覆盖率 100%；
+- 模型版本：`tfidf_logreg_oof_v1`；
+- MySQL serving KPI：99,703；
+- production API、大屏和 Agent：已完成。
+
+## 十、Result
 
 生产 ODS 行数、批次分区和 HDFS 文件验证通过。DWD 完成空文本过滤、源重复去除、时间转换、元数据关联、weak label 生成和分区写入，各项对账及质量门槛通过。
 

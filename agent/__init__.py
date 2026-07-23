@@ -1,3 +1,3 @@
-"""ShopReview Stage H Agent — LLM tools over Stage G metrics APIs."""
+"""ShopReview production Agent over warehouse metrics APIs."""
 
-__version__ = "0.1.0-h0"
+__version__ = "1.0.0"

@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import type { EChartsCoreOption } from "echarts/core";
 import type { KpiRecord } from "../types";
+import { useReducedMotion } from "../hooks/useReducedMotion";
+import { AnimatedNumber } from "./AnimatedNumber";
 import { ChartView } from "./ChartView";
 
 type Props = {
@@ -10,10 +12,12 @@ type Props = {
 };
 
 export function HealthRing({ score, dark }: Props) {
+  const reducedMotion = useReducedMotion();
   const option = useMemo<EChartsCoreOption>(() => {
-    const ink = dark ? "#e2e8f0" : "#0f172a";
-    const muted = dark ? "#94a3b8" : "#64748b";
     return {
+      animation: !reducedMotion,
+      animationDuration: 1000,
+      animationEasing: "cubicOut",
       series: [
         {
           type: "pie",
@@ -24,7 +28,16 @@ export function HealthRing({ score, dark }: Props) {
           data: [
             {
               value: score,
-              itemStyle: { color: score >= 70 ? "#14b8a6" : score >= 50 ? "#f59e0b" : "#e11d48" },
+              itemStyle: {
+                color:
+                  score >= 70
+                    ? "#14b8a6"
+                    : score >= 50
+                      ? "#f59e0b"
+                      : "#e11d48",
+                shadowBlur: reducedMotion ? 0 : 9,
+                shadowColor: "rgba(45,212,191,0.34)",
+              },
             },
             {
               value: Math.max(0, 100 - score),
@@ -32,31 +45,18 @@ export function HealthRing({ score, dark }: Props) {
             },
           ],
         },
-        {
-          type: "pie",
-          radius: ["0%", "58%"],
-          center: ["50%", "50%"],
-          silent: true,
-          label: {
-            show: true,
-            position: "center",
-            formatter: () => `{a|${score.toFixed(0)}}\n{b|健康指数}`,
-            rich: {
-              a: {
-                fontSize: 28,
-                fontWeight: 700,
-                fontFamily: "IBM Plex Mono, monospace",
-                color: ink,
-                lineHeight: 32,
-              },
-              b: { fontSize: 10, color: muted, lineHeight: 16 },
-            },
-          },
-          data: [{ value: 1, itemStyle: { color: "transparent" } }],
-        },
       ],
     };
-  }, [score, dark]);
+  }, [score, dark, reducedMotion]);
 
-  return <ChartView option={option} className="chart-host chart-host--ring" />;
+  return (
+    <div className="health-ring">
+      <ChartView option={option} className="chart-host chart-host--ring" />
+      <div className="health-ring__label">
+        <AnimatedNumber value={score} format={(value) => value.toFixed(0)} />
+        <small>健康指数</small>
+        <em>前端派生</em>
+      </div>
+    </div>
+  );
 }

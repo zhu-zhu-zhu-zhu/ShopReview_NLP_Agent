@@ -10,7 +10,6 @@ from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.providers import get_provider
 from app.providers.base import ProviderError
-from app.providers.warehouse import WarehouseProvider
 
 router = APIRouter(tags=["serving-v2"])
 
@@ -20,9 +19,7 @@ def _clamp(value: int, low: int, high: int) -> int:
 
 
 def _err(exc: ProviderError) -> JSONResponse:
-    status = (
-        501 if exc.error in {"not_available", "not_available_in_smoke"} else 500
-    )
+    status = 501 if exc.error == "not_available" else 500
     return JSONResponse(
         status_code=status,
         content={
@@ -32,16 +29,13 @@ def _err(exc: ProviderError) -> JSONResponse:
             "meta": {
                 "data_mode": get_settings().data_mode,
                 "schema_version": "serving_v2",
-                "production_business_metrics": get_settings().data_mode
-                == "warehouse",
+                "production_business_metrics": True,
             },
         },
     )
 
 
 def _meta(provider: Any, source: str) -> dict[str, Any]:
-    if isinstance(provider, WarehouseProvider):
-        return provider.response_meta(source)
     return provider.response_meta(source)
 
 
@@ -86,6 +80,35 @@ def stores(
         return JSONResponse(
             status_code=501,
             content={"ok": False, "error": "not_implemented", "message": str(exc)},
+        )
+
+
+@router.get("/api/top-positive-stores", response_model=None)
+def top_positive_stores(
+    limit: int = Query(default=10, ge=1, le=50),
+    min_reviews: int = Query(default=20, ge=0),
+) -> Any:
+    try:
+        provider = get_provider()
+        rows = provider.get_top_positive_stores(
+            limit=_clamp(limit, 1, 50),
+            min_reviews=min_reviews,
+        )
+        return {
+            "ok": True,
+            "data": rows,
+            "meta": _meta(provider, "warehouse:dws_store_sentiment"),
+        }
+    except ProviderError as exc:
+        return _err(exc)
+    except NotImplementedError as exc:
+        return JSONResponse(
+            status_code=501,
+            content={
+                "ok": False,
+                "error": "not_available",
+                "message": str(exc),
+            },
         )
 
 

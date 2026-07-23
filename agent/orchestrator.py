@@ -1,4 +1,4 @@
-"""LLM ↔ tools orchestrator (Stage H2)."""
+"""LLM-to-tools orchestrator for production investigations."""
 
 from __future__ import annotations
 
@@ -16,7 +16,8 @@ from agent.tools.base import summarize_for_step
 logger = logging.getLogger("shopreview.agent.orchestrator")
 
 _METRIC_HINT = re.compile(
-    r"(多少|比率|负面|正面|中性|KPI|kpi|排行|排名|方面|原因|周报|均分|评论量|商品)",
+    r"(多少|比率|负面|正面|中性|KPI|kpi|排行|排名|方面|原因|周报|均分|评论量|"
+    r"商品|店铺|告警|趋势|星级|矩阵|置信|购买|品类|批次|模型版本)",
     re.I,
 )
 

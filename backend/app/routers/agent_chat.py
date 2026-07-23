@@ -1,4 +1,4 @@
-"""POST /api/agent/chat — Stage H LLM agent entrypoint."""
+"""POST /api/agent/chat — production LLM Agent entrypoint."""
 
 from __future__ import annotations
 

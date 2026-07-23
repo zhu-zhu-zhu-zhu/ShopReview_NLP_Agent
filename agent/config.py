@@ -53,7 +53,6 @@ def _env_int(name: str, default: int) -> int:
 class Settings:
     data_mode: str
     backend_base_url: str
-    smoke_export_dir: Path
     http_timeout_sec: float
     llm_api_key: str
     llm_base_url: str
@@ -71,14 +70,9 @@ class Settings:
 def get_settings() -> Settings:
     _load_dotenv()
     base = _env("BACKEND_BASE_URL", "http://127.0.0.1:8080").rstrip("/")
-    smoke_rel = _env("SMOKE_EXPORT_DIR", "exports/agent/smoke")
-    smoke_path = Path(smoke_rel)
-    if not smoke_path.is_absolute():
-        smoke_path = repo_root() / smoke_path
     return Settings(
-        data_mode=_env("AGENT_DATA_MODE", "http").lower() or "http",
+        data_mode="warehouse",
         backend_base_url=base,
-        smoke_export_dir=smoke_path,
         http_timeout_sec=_env_float("HTTP_TIMEOUT_SEC", 15.0),
         llm_api_key=_env("LLM_API_KEY", ""),
         llm_base_url=_env("LLM_BASE_URL", "https://api.deepseek.com").rstrip("/"),

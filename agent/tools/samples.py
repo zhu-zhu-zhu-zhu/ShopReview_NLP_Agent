@@ -1,16 +1,14 @@
-"""Tool: search_review_samples → GET /api/samples (Stage G placeholder, Scheme A)."""
+"""Tool: search_review_samples → GET /api/samples."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from agent.adapters.http_api import HttpApiAdapter
-from agent.tools.base import as_tool_dict
+from agent.tools.base import as_tool_dict, clamp_int, get_adapter, invalid_args
 
 DESCRIPTION = (
-    "检索脱敏评论文本样例。"
-    "当前 smoke 安全导出不含原文；调用后通常得到 not_available_in_smoke。"
-    "禁止从原始 JSONL 自行取评论文本。"
+    "检索生产 warehouse 中的脱敏评论样例，只返回 review_text_preview。"
+    "不返回 user_id 或完整评论，可按预测标签过滤。"
 )
 
 OPENAI_SCHEMA: dict[str, Any] = {
@@ -21,13 +19,14 @@ OPENAI_SCHEMA: dict[str, Any] = {
         "parameters": {
             "type": "object",
             "properties": {
-                "keyword": {
-                    "type": "string",
-                    "description": "可选关键词；smoke 下接口仍不可用",
-                },
                 "limit": {
                     "type": "integer",
-                    "description": "可选条数；smoke 下接口仍不可用",
+                    "description": "返回条数，默认 10，范围 1～20",
+                },
+                "pred_label": {
+                    "type": "string",
+                    "enum": ["negative", "neutral", "positive"],
+                    "description": "可选模型预测标签",
                 },
             },
             "additionalProperties": False,
@@ -37,5 +36,16 @@ OPENAI_SCHEMA: dict[str, Any] = {
 
 
 def run(arguments: dict[str, Any] | None = None) -> dict[str, Any]:
-    _ = arguments  # Stage G /api/samples 暂无查询参数；保留 schema 供将来扩展
-    return as_tool_dict(HttpApiAdapter().get_samples())
+    args = arguments or {}
+    label = str(args.get("pred_label") or "").lower() or None
+    if label not in {None, "negative", "neutral", "positive"}:
+        return invalid_args(
+            "pred_label 必须是 negative/neutral/positive",
+            source="tool:search_review_samples",
+        )
+    return as_tool_dict(
+        get_adapter().get_samples(
+            limit=clamp_int(args.get("limit"), 1, 20, 10),
+            pred_label=label,
+        )
+    )

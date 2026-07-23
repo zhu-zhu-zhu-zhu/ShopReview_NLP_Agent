@@ -38,7 +38,7 @@ class InspectAmazonFashionTests(unittest.TestCase):
             max_review_lines=20,
             max_meta_lines=20,
             progress_every=0,
-            mode="smoke",
+            mode="bounded",
         )
 
     def run_fixture(self):

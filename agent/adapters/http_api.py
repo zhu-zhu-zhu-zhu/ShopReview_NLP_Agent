@@ -1,4 +1,4 @@
-"""HTTP adapter — Stage G FastAPI metrics (primary path)."""
+"""HTTP adapter for the production FastAPI metrics service."""
 
 from __future__ import annotations
 
@@ -181,24 +181,82 @@ class HttpApiAdapter(MetricsAdapter):
             {"limit": limit, "min_reviews": min_reviews},
         )
 
+    def get_top_positive_products(
+        self,
+        limit: int = 5,
+        min_reviews: int = 5,
+    ) -> AdapterResult:
+        return self._get(
+            "/api/top-positive-products",
+            {"limit": limit, "min_reviews": min_reviews},
+        )
+
     def get_aspects(self, aspect: str | None = None) -> AdapterResult:
         return self._get("/api/aspects", {"aspect": aspect})
 
     def get_negative_reasons(
         self,
         limit: int = 10,
-        parent_asin: str | None = None,
+    ) -> AdapterResult:
+        return self._get("/api/negative-reasons", {"limit": limit})
+
+    def get_trend(self, recent_days: int = 365) -> AdapterResult:
+        return self._get("/api/trend", {"recent_days": recent_days})
+
+    def get_monthly_trend(self, limit: int = 24) -> AdapterResult:
+        result = self._get("/api/trends/monthly")
+        if result.get("ok") and isinstance(result.get("data"), list):
+            result["data"] = result["data"][-limit:]
+        return result
+
+    def get_categories(self) -> AdapterResult:
+        return self._get("/api/categories")
+
+    def get_stores(
+        self,
+        limit: int = 10,
+        min_reviews: int = 20,
     ) -> AdapterResult:
         return self._get(
-            "/api/negative-reasons",
-            {"limit": limit, "parent_asin": parent_asin},
+            "/api/stores",
+            {"limit": limit, "min_reviews": min_reviews},
         )
 
-    def get_trend(self) -> AdapterResult:
-        return self._get("/api/trend")
+    def get_top_positive_stores(
+        self,
+        limit: int = 10,
+        min_reviews: int = 20,
+    ) -> AdapterResult:
+        return self._get(
+            "/api/top-positive-stores",
+            {"limit": limit, "min_reviews": min_reviews},
+        )
 
-    def get_alerts(self) -> AdapterResult:
-        return self._get("/api/alerts")
+    def get_verified_purchase(self) -> AdapterResult:
+        return self._get("/api/verified-purchase")
 
-    def get_samples(self) -> AdapterResult:
-        return self._get("/api/samples")
+    def get_rating_matrix(self) -> AdapterResult:
+        return self._get("/api/rating-matrix")
+
+    def get_confidence(self) -> AdapterResult:
+        return self._get("/api/confidence")
+
+    def get_alerts(
+        self,
+        limit: int = 20,
+        alert_level: str | None = None,
+    ) -> AdapterResult:
+        return self._get(
+            "/api/alerts",
+            {"limit": limit, "alert_level": alert_level},
+        )
+
+    def get_samples(
+        self,
+        limit: int = 10,
+        pred_label: str | None = None,
+    ) -> AdapterResult:
+        return self._get(
+            "/api/samples",
+            {"limit": limit, "pred_label": pred_label},
+        )

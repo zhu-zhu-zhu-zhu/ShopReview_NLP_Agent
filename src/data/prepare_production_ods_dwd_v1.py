@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator, TextIO
 
-from src.data.prepare_ods_smoke_data import DELIMITER, convert_metadata, convert_review
+from src.data.hive_text import DELIMITER, convert_metadata, convert_review
 
 
 DEFAULT_REVIEW_LIMIT = 100_000
