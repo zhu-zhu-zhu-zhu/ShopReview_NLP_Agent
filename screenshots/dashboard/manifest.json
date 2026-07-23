@@ -1,0 +1,67 @@
+{
+  "generated_at": "2026-07-23T09:56:12.325Z",
+  "source_url": "http://127.0.0.1:5173",
+  "health_url": "http://127.0.0.1:8080/api/health",
+  "data_contract": {
+    "data_mode": "warehouse",
+    "load_batch_id": "prod_v1_100k",
+    "model_version": "tfidf_logreg_oof_v1",
+    "review_count": 99703
+  },
+  "viewport": {
+    "width": 1440,
+    "height": 687
+  },
+  "device_scale_factor": 2,
+  "output_pixels": {
+    "width": 2880,
+    "height": 1374
+  },
+  "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "screenshots": [
+    {
+      "file": "01-dashboard-overview.png",
+      "title": "生产数据可视化大屏总览（差评榜 / 近 365 日）",
+      "type": "viewport"
+    },
+    {
+      "file": "02-positive-rankings.png",
+      "title": "店铺好评榜与商品好评榜",
+      "type": "component",
+      "selector": "section[aria-label=\"风险热力榜\"]"
+    },
+    {
+      "file": "03-sentiment-trend-365d.png",
+      "title": "近 365 日情感时间河",
+      "type": "component",
+      "selector": "section[aria-label=\"情感时间河\"]"
+    },
+    {
+      "file": "04-alert-radar.png",
+      "title": "生产告警雷达",
+      "type": "component",
+      "selector": "section[aria-label=\"告警雷达\"]"
+    },
+    {
+      "file": "05-model-diagnostics.png",
+      "title": "星级预测矩阵、置信度和负面方面诊断",
+      "type": "component",
+      "selector": "section[aria-label=\"模型诊断\"]"
+    },
+    {
+      "file": "06-agent-drawer.png",
+      "title": "ReviewOps Copilot 快捷调查与自然语言入口",
+      "type": "viewport"
+    },
+    {
+      "file": "07-agent-risk-investigation.png",
+      "title": "最高风险商品真实 warehouse 证据链",
+      "type": "component",
+      "selector": "#reviewops-drawer"
+    }
+  ],
+  "validation": {
+    "browser_console_errors": 0,
+    "failed_api_responses": 0
+  }
+}
