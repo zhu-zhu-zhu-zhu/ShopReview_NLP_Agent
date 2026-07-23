@@ -28,8 +28,13 @@ dist/
 .env
 .env.*
 !.env.example
+!.env.mysql.example
 .env.local
 .env.*.local
+
+# Hive DWS -> MySQL 服务层本地导出与状态
+data/processed/mysql_serving_sync/
+data/state/mysql_serving_sync/
 
 # 本地检查缓存
 *.sqlite
